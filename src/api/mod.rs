@@ -1,4 +1,5 @@
 pub mod generate;
+pub mod generate_parameters;
 pub mod health;
 pub mod openapi;
 

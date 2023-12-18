@@ -4,11 +4,15 @@ use utoipa::ToSchema;
 
 use crate::llm::create_text_generation;
 
-use super::ErrorResponse;
+use super::{generate_parameters::GenerateParameters, ErrorResponse};
 
 #[derive(Deserialize, ToSchema)]
 pub struct TextGenerationRequest {
+    #[schema(example = "My name is John")]
     pub inputs: String,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<GenerateParameters>,
 }
 
 #[derive(Serialize, ToSchema)]
