@@ -14,6 +14,7 @@ pub fn server() -> Router {
     Router::new()
         .route("/generate", post(generate_text_handler))
         .route("/health", get(health_check))
+        .route("/", post(generate_stream_handler))
         .route("/generate_stream", post(generate_stream_handler))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }

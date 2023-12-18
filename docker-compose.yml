@@ -6,5 +6,21 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - RUST_LOG=info
+      - RUST_LOG=debug
     command: ./chat-flame-backend
+
+  mongodb:
+      image: mongo:latest
+
+  chat-ui:
+    image: ghcr.io/huggingface/chat-ui:latest
+    container_name: chat-ui
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./chat-ui.env:/app/.env.local
+    depends_on:
+      - mongodb
+      - chat-flame-backend

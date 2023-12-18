@@ -1,5 +1,8 @@
-use axum::{response::IntoResponse, Json};
-use axum_streams::StreamBodyAs;
+use axum::{
+    response::{sse::Event, IntoResponse, Sse},
+    Json,
+};
+use futures::stream::StreamExt;
 
 use crate::llm::create_text_generation;
 
@@ -19,5 +22,10 @@ pub async fn generate_stream_handler(Json(request): Json<GenerateRequest>) -> im
     let mut generator = create_text_generation().unwrap();
     let stream = generator.run_stream(&request.inputs, 50);
 
-    StreamBodyAs::json_nl(stream)
+    let event_stream = stream.map(|response| -> Result<Event, std::convert::Infallible> {
+        let data = serde_json::to_string(&response)
+            .unwrap_or_else(|_| "Error serializing response".to_string());
+        Ok(Event::default().data(data))
+    });
+    Sse::new(event_stream)
 }
