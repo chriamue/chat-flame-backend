@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  chat-flame-backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+    command: ./chat-flame-backend

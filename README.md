@@ -35,8 +35,18 @@ or the stream endpoint
 curl -X POST -H "Content-Type: application/json" -d '{"inputs": "Your input text"}' http://localhost:8080/generate_stream
 ```
 
+### Docker
+
+```bash
+docker-compose up --build
+```
+
+Visit http://localhost:8080/swagger-ui for the swagger ui.
+
+
 ## Todo
 
 - [ ] implement api for https://huggingface.github.io/text-generation-inference/#/
 - [ ] model configuration
 - [ ] generate stream
+- [x] docker image and docker-compose

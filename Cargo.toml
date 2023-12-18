@@ -9,6 +9,10 @@ repository = "https://github.com/chriamue/chat-flame-backend"
 description = "ChatFlameBackend is an innovative backend solution for chat applications, leveraging the power of the Candle AI framework with a focus on the Mistral model"
 keywords = ["chat", "backend", "candle", "ai", "mistral"]
 
+[[bin]]
+name = "chat-flame-backend"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0"
 axum = "0.7"
