@@ -10,11 +10,17 @@ description = "ChatFlameBackend is an innovative backend solution for chat appli
 keywords = ["chat", "backend", "candle", "ai", "mistral"]
 
 [dependencies]
+anyhow = "1.0"
 axum = "0.7"
+candle-core = "0.3.1"
+candle-examples = "0.3.1"
+candle-transformers = "0.3.1"
+hf-hub = { version = "0.3.1", features=["tokio"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 structopt = "0.3.26"
+tokenizers = { version = "0.13.4", default-features = false, features = ["onig"] }
 tokio = { version = "1", features = ["full"] }
 utoipa = { version = "4.1.0", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "5", features = ["axum"] }

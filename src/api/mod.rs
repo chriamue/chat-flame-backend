@@ -8,5 +8,5 @@ use utoipa::ToSchema;
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct ErrorResponse {
     error: String,
-    error_type: String,
+    error_type: Option<String>,
 }

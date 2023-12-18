@@ -9,7 +9,7 @@ use crate::api::{generate::generate_text_handler, health::health_check, openapi:
 
 pub fn server() -> Router {
     Router::new()
-        .route("/generate-text", post(generate_text_handler))
+        .route("/generate", post(generate_text_handler))
         .route("/health", get(health_check))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }

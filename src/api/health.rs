@@ -12,7 +12,7 @@ use super::ErrorResponse;
     path = "/health",
     responses(
         (status = 200, description = "Everything is working fine"),
-        (status = 503, description = "Text generation inference is down", body = ErrorResponse, example = json!(ErrorResponse { error: String::from("unhealthy"), error_type: String::from("healthcheck") })),
+        (status = 503, description = "Text generation inference is down", body = ErrorResponse, example = json!(ErrorResponse { error: String::from("unhealthy"), error_type: Some(String::from("healthcheck")) })),
     )
 )]
 pub async fn health_check() -> impl IntoResponse {
@@ -26,7 +26,7 @@ pub async fn health_check() -> impl IntoResponse {
         // Server is unhealthy
         let error_response = ErrorResponse {
             error: "unhealthy".into(),
-            error_type: "healthcheck".into(),
+            error_type: Some("healthcheck".into()),
         };
 
         Json(error_response).into_response()
