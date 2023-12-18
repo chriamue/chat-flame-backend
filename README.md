@@ -29,4 +29,8 @@ curl -X POST http://localhost:8080/generate-text \
      -d '{"prompt": "Your text prompt here"}'
 ```
 
+## Todo
 
+- [ ] implement api for https://huggingface.github.io/text-generation-inference/#/
+- [ ] model configuration
+- [ ] generate stream
