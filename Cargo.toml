@@ -1,0 +1,15 @@
+[package]
+name = "chat-flame-backend"
+version = "0.1.0"
+edition = "2021"
+readme = "README.md"
+authors = ["chriamue@gmail.com"]
+license = "MIT"
+repository = "https://github.com/chriamue/chat-flame-backend"
+description = "ChatFlameBackend is an innovative backend solution for chat applications, leveraging the power of the Candle AI framework with a focus on the Mistral model"
+keywords = ["chat", "backend", "candle", "ai", "mistral"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+structopt = "0.3.26"
