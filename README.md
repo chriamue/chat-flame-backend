@@ -29,6 +29,12 @@ curl -X POST http://localhost:8080/generate-text \
      -d '{"prompt": "Your text prompt here"}'
 ```
 
+or the stream endpoint
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"inputs": "Your input text"}' http://localhost:8080/generate_stream
+```
+
 ## Todo
 
 - [ ] implement api for https://huggingface.github.io/text-generation-inference/#/

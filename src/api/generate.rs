@@ -7,7 +7,7 @@ use crate::llm::create_text_generation;
 use super::{generate_parameters::GenerateParameters, ErrorResponse};
 
 #[derive(Deserialize, ToSchema)]
-pub struct TextGenerationRequest {
+pub struct GenerateRequest {
     #[schema(example = "My name is John")]
     pub inputs: String,
 
@@ -16,7 +16,7 @@ pub struct TextGenerationRequest {
 }
 
 #[derive(Serialize, ToSchema)]
-pub struct TextGenerationResponse {
+pub struct GenerateResponse {
     pub generated_text: String,
     // Add other fields as necessary
 }
@@ -25,9 +25,9 @@ pub struct TextGenerationResponse {
 #[utoipa::path(
     post,
     path = "/generate",
-    request_body = TextGenerationRequest,
+    request_body = GenerateRequest,
     responses(
-        (status = 200, description = "Generated Text", body = TextGenerationResponse),
+        (status = 200, description = "Generated Text", body = GenerateResponse),
         (status = 422, description = "Input validation error", body = ErrorResponse, example = json!(ErrorResponse {error:"Input validation error".to_string(), error_type: None })),
         (status = 424, description = "Generation Error", body = ErrorResponse, example = json!(ErrorResponse {error:"Request failed during generation".to_string(), error_type: None })),
         (status = 429, description = "Model is overloaded", body = ErrorResponse, example = json!(ErrorResponse {error:"Model is overloaded".to_string(), error_type: None })),
@@ -36,15 +36,15 @@ pub struct TextGenerationResponse {
     tag = "Text Generation Inference"
 )]
 pub async fn generate_text_handler(
-    Json(payload): Json<TextGenerationRequest>,
-) -> Result<Json<TextGenerationResponse>, (StatusCode, Json<ErrorResponse>)> {
+    Json(payload): Json<GenerateRequest>,
+) -> Result<Json<GenerateResponse>, (StatusCode, Json<ErrorResponse>)> {
     let generator = create_text_generation();
     match generator {
         Ok(mut generator) => {
             let generated_text = generator.run(&payload.inputs, 50);
             match generated_text {
                 Ok(generated_text) => match generated_text {
-                    Some(text) => Ok(Json(TextGenerationResponse {
+                    Some(text) => Ok(Json(GenerateResponse {
                         generated_text: text,
                     })),
                     None => Err((
