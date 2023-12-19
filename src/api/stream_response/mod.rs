@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum FinishReason {
     Length,
@@ -9,7 +9,7 @@ pub enum FinishReason {
     StopSequence,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct Token {
     pub id: i32,
     pub text: String,
@@ -18,40 +18,40 @@ pub struct Token {
     pub special: bool,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PrefillToken {
-    id: i32,
-    text: String,
+    pub id: i32,
+    pub text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    logprob: Option<f64>,
+    pub logprob: Option<f64>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BestOfSequence {
-    finish_reason: FinishReason,
-    generated_text: String,
-    generated_tokens: i32,
-    prefill: Vec<PrefillToken>,
+    pub finish_reason: FinishReason,
+    pub generated_text: String,
+    pub generated_tokens: i32,
+    pub prefill: Vec<PrefillToken>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    seed: Option<i64>,
-    tokens: Vec<Token>,
-    top_tokens: Vec<Vec<Token>>,
+    pub seed: Option<i64>,
+    pub tokens: Vec<Token>,
+    pub top_tokens: Vec<Vec<Token>>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Details {
     #[serde(skip_serializing_if = "Option::is_none")]
-    best_of_sequences: Option<Vec<BestOfSequence>>,
-    finish_reason: FinishReason,
-    generated_tokens: i32,
-    prefill: Vec<PrefillToken>,
+    pub best_of_sequences: Option<Vec<BestOfSequence>>,
+    pub finish_reason: FinishReason,
+    pub generated_tokens: i32,
+    pub prefill: Vec<PrefillToken>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    seed: Option<i64>,
-    tokens: Vec<Token>,
-    top_tokens: Vec<Vec<Token>>,
+    pub seed: Option<i64>,
+    pub tokens: Vec<Token>,
+    pub top_tokens: Vec<Vec<Token>>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct StreamDetails {
     pub finish_reason: FinishReason,
     pub generated_tokens: i32,
@@ -59,7 +59,7 @@ pub struct StreamDetails {
     pub seed: Option<i64>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct StreamResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<StreamDetails>,
