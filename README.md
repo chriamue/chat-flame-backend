@@ -45,7 +45,7 @@ Visit http://localhost:8080/swagger-ui for the swagger ui.
 
 ## Supported Models
 
-- [x] Mistral
+- [x] [Mistral](https://huggingface.co/mistralai/Mistral-7B-v0.1)
 - [ ] GPT-Neo
 - [ ] GPT-J
 - [ ] Llama

@@ -27,7 +27,7 @@ async fn main() {
             println!("Running on port: {}", config.port);
 
             let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-            let app = server();
+            let app = server(config);
 
             println!("Server running at http://{}", addr);
 

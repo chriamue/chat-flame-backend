@@ -1,8 +1,8 @@
-use axum::{http::StatusCode, Json};
+use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::llm::create_text_generation;
+use crate::{config::Config, llm::create_text_generation};
 
 use super::{generate_parameters::GenerateParameters, ErrorResponse};
 
@@ -36,6 +36,7 @@ pub struct GenerateResponse {
     tag = "Text Generation Inference"
 )]
 pub async fn generate_text_handler(
+    config: State<Config>,
     Json(payload): Json<GenerateRequest>,
 ) -> Result<Json<GenerateResponse>, (StatusCode, Json<ErrorResponse>)> {
     let temperature = match &payload.parameters {
@@ -59,7 +60,13 @@ pub async fn generate_text_handler(
         None => 50,
     };
 
-    let generator = create_text_generation(temperature, top_p, repeat_penalty, repeat_last_n);
+    let generator = create_text_generation(
+        temperature,
+        top_p,
+        repeat_penalty,
+        repeat_last_n,
+        &config.cache_dir,
+    );
     match generator {
         Ok(mut generator) => {
             let generated_text = generator.run(&payload.inputs, sample_len);

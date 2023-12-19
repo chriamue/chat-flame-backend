@@ -1,12 +1,13 @@
 use std::vec;
 
 use axum::{
+    extract::State,
     response::{sse::Event, IntoResponse, Sse},
     Json,
 };
 use futures::stream::StreamExt;
 
-use crate::llm::create_text_generation;
+use crate::{config::Config, llm::create_text_generation};
 
 use super::generate::GenerateRequest;
 
@@ -20,7 +21,10 @@ use super::generate::GenerateRequest;
     ),
     tag = "Text Generation Inference"
 )]
-pub async fn generate_stream_handler(Json(payload): Json<GenerateRequest>) -> impl IntoResponse {
+pub async fn generate_stream_handler(
+    config: State<Config>,
+    Json(payload): Json<GenerateRequest>,
+) -> impl IntoResponse {
     println!("Received request: {:?}", payload);
     let temperature = match &payload.parameters {
         Some(parameters) => parameters.temperature,
@@ -48,8 +52,14 @@ pub async fn generate_stream_handler(Json(payload): Json<GenerateRequest>) -> im
         None => vec!["</s>".to_string()],
     };
 
-    let mut generator =
-        create_text_generation(temperature, top_p, repeat_penalty, repeat_last_n).unwrap();
+    let mut generator = create_text_generation(
+        temperature,
+        top_p,
+        repeat_penalty,
+        repeat_last_n,
+        &config.cache_dir,
+    )
+    .unwrap();
     let stream = generator.run_stream(&payload.inputs, sample_len, Some(stop_tokens));
 
     let event_stream = stream.map(|response| -> Result<Event, std::convert::Infallible> {

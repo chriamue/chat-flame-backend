@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   chat-flame-backend:
@@ -8,9 +8,11 @@ services:
     environment:
       - RUST_LOG=debug
     command: ./chat-flame-backend
+    volumes:
+      - models:/tmp/models/
 
   mongodb:
-      image: mongo:latest
+    image: mongo:latest
 
   chat-ui:
     image: ghcr.io/huggingface/chat-ui:latest
@@ -23,4 +25,8 @@ services:
       - ./chat-ui.env:/app/.env.local
     depends_on:
       - mongodb
-      - chat-flame-backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  models:

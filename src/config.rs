@@ -1,10 +1,12 @@
 use serde::Deserialize;
 use std::fs::File;
 use std::io::Read;
+use std::path::PathBuf;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Config {
     pub port: u16,
+    pub cache_dir: Option<PathBuf>,
 }
 
 pub fn load_config(file_path: &str) -> Result<Config, Box<dyn std::error::Error>> {

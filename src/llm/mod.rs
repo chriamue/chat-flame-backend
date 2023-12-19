@@ -1,11 +1,14 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/mistral/main.rs
 
 mod text_generation;
+use std::path::PathBuf;
+
 use anyhow::{Error as E, Result};
 use candle_core::Device;
 use candle_transformers::models::mistral::{Config, Model as Mistral};
 use candle_transformers::models::quantized_mistral::Model as QMistral;
-use hf_hub::{api::sync::Api, Repo, RepoType};
+use hf_hub::api::sync::{Api, ApiBuilder};
+use hf_hub::{Repo, RepoType};
 pub use text_generation::TextGeneration;
 use tokenizers::Tokenizer;
 
@@ -15,12 +18,19 @@ pub enum Model {
     Quantized(QMistral),
 }
 
-pub fn create_model() -> Result<(Model, Device), Box<dyn std::error::Error>> {
+pub fn create_model(
+    cache_dir: &Option<PathBuf>,
+) -> Result<(Model, Device), Box<dyn std::error::Error>> {
     let model_id = "lmz/candle-mistral".to_string();
     let revision = "main".to_string();
 
     let start = std::time::Instant::now();
-    let api = Api::new()?;
+    let api = match cache_dir {
+        Some(cache_dir) => ApiBuilder::default()
+            .with_cache_dir(cache_dir.clone())
+            .build()?,
+        None => Api::new()?,
+    };
     let repo = api.repo(Repo::with_revision(model_id, RepoType::Model, revision));
 
     let filename = &repo.get("model-q4k.gguf")?;
@@ -48,8 +58,9 @@ pub fn create_text_generation(
     top_p: Option<f64>,
     repeat_penalty: f32,
     repeat_last_n: usize,
+    cache_dir: &Option<PathBuf>,
 ) -> Result<TextGeneration, Box<dyn std::error::Error>> {
-    let model = create_model()?;
+    let model = create_model(cache_dir)?;
     let tokenizer = create_tokenizer()?;
 
     let device = Device::Cpu;

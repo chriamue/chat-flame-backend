@@ -1,1 +1,3 @@
 port: 8080
+cache_dir: /tmp/models/
+model-id: lmz/candle-mistral
