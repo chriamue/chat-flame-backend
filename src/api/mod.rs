@@ -1,6 +1,7 @@
 pub mod generate;
 pub mod generate_parameters;
 pub mod generate_stream;
+pub mod generate_text;
 pub mod health;
 pub mod openapi;
 pub mod stream_response;

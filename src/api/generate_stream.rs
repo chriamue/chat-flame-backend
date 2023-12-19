@@ -9,7 +9,7 @@ use futures::stream::StreamExt;
 
 use crate::{config::Config, llm::create_text_generation};
 
-use super::generate::GenerateRequest;
+use super::generate_text::GenerateRequest;
 
 /// Generate tokens
 #[utoipa::path(
