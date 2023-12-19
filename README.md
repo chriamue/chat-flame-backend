@@ -43,6 +43,16 @@ docker-compose up --build
 
 Visit http://localhost:8080/swagger-ui for the swagger ui.
 
+## Supported Models
+
+- [x] Mistral
+- [ ] GPT-Neo
+- [ ] GPT-J
+- [ ] Llama
+
+### Mistral
+
+["lmz/candle-mistral"](https://huggingface.co/lmz/candle-mistral)
 
 ## Todo
 

@@ -6,7 +6,7 @@ use crate::llm::create_text_generation;
 
 use super::{generate_parameters::GenerateParameters, ErrorResponse};
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, ToSchema, Debug)]
 pub struct GenerateRequest {
     #[schema(example = "My name is John")]
     pub inputs: String,
@@ -38,10 +38,31 @@ pub struct GenerateResponse {
 pub async fn generate_text_handler(
     Json(payload): Json<GenerateRequest>,
 ) -> Result<Json<GenerateResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let generator = create_text_generation();
+    let temperature = match &payload.parameters {
+        Some(parameters) => parameters.temperature,
+        None => None,
+    };
+    let top_p: Option<f64> = match &payload.parameters {
+        Some(parameters) => parameters.top_p,
+        None => None,
+    };
+    let repeat_penalty: f32 = match &payload.parameters {
+        Some(parameters) => parameters.repetition_penalty.unwrap_or(1.1),
+        None => 1.1,
+    };
+    let repeat_last_n = match &payload.parameters {
+        Some(parameters) => parameters.top_n_tokens.unwrap_or(64) as usize,
+        None => 64,
+    };
+    let sample_len = match &payload.parameters {
+        Some(parameters) => parameters.max_new_tokens.unwrap_or(50) as usize,
+        None => 50,
+    };
+
+    let generator = create_text_generation(temperature, top_p, repeat_penalty, repeat_last_n);
     match generator {
         Ok(mut generator) => {
-            let generated_text = generator.run(&payload.inputs, 50);
+            let generated_text = generator.run(&payload.inputs, sample_len);
             match generated_text {
                 Ok(generated_text) => match generated_text {
                     Some(text) => Ok(Json(GenerateResponse {

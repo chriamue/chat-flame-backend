@@ -53,10 +53,10 @@ pub struct Details {
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub struct StreamDetails {
-    finish_reason: FinishReason,
-    generated_tokens: i32,
+    pub finish_reason: FinishReason,
+    pub generated_tokens: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
-    seed: Option<i64>,
+    pub seed: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]

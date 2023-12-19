@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GenerateParameters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(example = json!(1))]
@@ -38,7 +38,7 @@ pub struct GenerateParameters {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(example = json!(0.5))]
-    pub temperature: Option<f32>,
+    pub temperature: Option<f64>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(example = json!(10))]
@@ -50,7 +50,7 @@ pub struct GenerateParameters {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(example = json!(0.95))]
-    pub top_p: Option<f32>,
+    pub top_p: Option<f64>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub truncate: Option<i32>,

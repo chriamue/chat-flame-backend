@@ -1,3 +1,5 @@
+use std::vec;
+
 use axum::{
     response::{sse::Event, IntoResponse, Sse},
     Json,
@@ -18,9 +20,37 @@ use super::generate::GenerateRequest;
     ),
     tag = "Text Generation Inference"
 )]
-pub async fn generate_stream_handler(Json(request): Json<GenerateRequest>) -> impl IntoResponse {
-    let mut generator = create_text_generation().unwrap();
-    let stream = generator.run_stream(&request.inputs, 50);
+pub async fn generate_stream_handler(Json(payload): Json<GenerateRequest>) -> impl IntoResponse {
+    println!("Received request: {:?}", payload);
+    let temperature = match &payload.parameters {
+        Some(parameters) => parameters.temperature,
+        None => None,
+    };
+    let top_p: Option<f64> = match &payload.parameters {
+        Some(parameters) => parameters.top_p,
+        None => None,
+    };
+    let repeat_penalty: f32 = match &payload.parameters {
+        Some(parameters) => parameters.repetition_penalty.unwrap_or(1.1),
+        None => 1.1,
+    };
+    let repeat_last_n = match &payload.parameters {
+        Some(parameters) => parameters.top_n_tokens.unwrap_or(64) as usize,
+        None => 64,
+    };
+    let sample_len = match &payload.parameters {
+        Some(parameters) => parameters.max_new_tokens.unwrap_or(50) as usize,
+        None => 50,
+    };
+
+    let stop_tokens = match &payload.parameters {
+        Some(parameters) => parameters.stop.clone(),
+        None => vec!["</s>".to_string()],
+    };
+
+    let mut generator =
+        create_text_generation(temperature, top_p, repeat_penalty, repeat_last_n).unwrap();
+    let stream = generator.run_stream(&payload.inputs, sample_len, Some(stop_tokens));
 
     let event_stream = stream.map(|response| -> Result<Event, std::convert::Infallible> {
         let data = serde_json::to_string(&response)
