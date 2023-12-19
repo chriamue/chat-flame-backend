@@ -24,9 +24,9 @@ cargo test
 or with curl
 
 ```bash
-curl -X POST http://localhost:8080/generate-text \
+curl -X POST http://localhost:8080/generate \
      -H "Content-Type: application/json" \
-     -d '{"prompt": "Your text prompt here"}'
+     -d '{"inputs": "Your text prompt here"}'
 ```
 
 or the stream endpoint

@@ -1,4 +1,5 @@
 use chat_flame_backend::{config::load_config, server::server};
+use log::{error, info};
 use std::net::SocketAddr;
 use structopt::StructOpt;
 
@@ -19,23 +20,24 @@ struct Opt {
 
 #[tokio::main]
 async fn main() {
+    pretty_env_logger::init();
     let opt = Opt::from_args();
 
     match load_config(&opt.config) {
         Ok(config) => {
             // Initialize your application with config
-            println!("Running on port: {}", config.port);
+            info!("Running on port: {}", config.port);
 
             let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
             let app = server(config);
 
-            println!("Server running at http://{}", addr);
+            info!("Server running at http://{}", addr);
 
             let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
             axum::serve(listener, app).await.unwrap();
         }
         Err(e) => {
-            eprintln!("Failed to load config: {}", e);
+            error!("Failed to load config: {}", e);
             std::process::exit(1);
         }
     }

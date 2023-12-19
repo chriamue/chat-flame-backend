@@ -9,6 +9,7 @@ use candle_transformers::models::mistral::{Config, Model as Mistral};
 use candle_transformers::models::quantized_mistral::Model as QMistral;
 use hf_hub::api::sync::{Api, ApiBuilder};
 use hf_hub::{Repo, RepoType};
+use log::info;
 pub use text_generation::TextGeneration;
 use tokenizers::Tokenizer;
 
@@ -34,7 +35,7 @@ pub fn create_model(
     let repo = api.repo(Repo::with_revision(model_id, RepoType::Model, revision));
 
     let filename = &repo.get("model-q4k.gguf")?;
-    println!("retrieved the files in {:?}", start.elapsed());
+    info!("retrieved the model files in {:?}", start.elapsed());
 
     let config = Config::config_7b_v0_1(false);
 

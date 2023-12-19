@@ -6,6 +6,7 @@ use candle_core::{DType, Device, Tensor};
 use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::generation::LogitsProcessor;
 use futures::Stream;
+use log::{debug, info, trace};
 use std::{collections::HashSet, io::Write, sync::Arc};
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
@@ -56,7 +57,7 @@ impl TextGeneration {
             .to_vec();
         for &t in tokens.iter() {
             if let Some(t) = tokenizer.next_token(t)? {
-                print!("{t}")
+                trace!("{t}")
             }
         }
         std::io::stdout().flush()?;
@@ -98,16 +99,15 @@ impl TextGeneration {
             if let Some(t) = tokenizer.next_token(next_token)? {
                 generated_text.push_str(&t);
 
-                print!("{t}");
+                trace!("{t}");
                 std::io::stdout().flush()?;
             }
         }
         let dt = start_gen.elapsed();
         if let Some(rest) = tokenizer.decode_rest().map_err(E::msg)? {
-            print!("{rest}");
+            debug!("{rest}");
         }
-        std::io::stdout().flush()?;
-        println!(
+        info!(
             "\n{generated_tokens} tokens generated ({:.2} token/s)",
             generated_tokens as f64 / dt.as_secs_f64(),
         );
@@ -120,7 +120,7 @@ impl TextGeneration {
         sample_len: usize,
         stop_tokens: Option<Vec<String>>,
     ) -> impl Stream<Item = StreamResponse> {
-        println!("Running stream for {}: {}", sample_len, prompt);
+        debug!("Running stream for {}: {}", sample_len, prompt);
         let (tx, rx) = tokio::sync::mpsc::channel(32);
 
         let tokenizer = self.tokenizer.clone();
@@ -144,12 +144,13 @@ impl TextGeneration {
                 .get_ids()
                 .to_vec();
 
+            let mut generated_tokens = 0usize;
             let stop_token_ids: HashSet<u32> = stop_tokens
                 .unwrap_or_default()
                 .iter()
                 .filter_map(|token| tokenizer.get_token(token))
                 .collect();
-
+            let start_gen = std::time::Instant::now();
             let mut generated_text = String::new();
 
             for index in 0..sample_len {
@@ -181,6 +182,7 @@ impl TextGeneration {
                 };
 
                 let next_token = logits_processor.sample(&logits).unwrap();
+                generated_tokens += 1;
                 tokens.push(next_token);
 
                 if let Some(t) = tokenizer.next_token(next_token).unwrap() {
@@ -205,7 +207,7 @@ impl TextGeneration {
                         return;
                     }
                     generated_text.push_str(&t);
-                    print!("{t}");
+                    trace!("{t}");
                     tx.send(StreamResponse {
                         generated_text: None,
                         details: None,
@@ -224,8 +226,12 @@ impl TextGeneration {
                     })
                     .await
                     .unwrap();
-                    std::io::stdout().flush().unwrap();
                 }
+                let dt = start_gen.elapsed();
+                info!(
+                    "\n{generated_tokens} tokens generated ({:.2} token/s)",
+                    generated_tokens as f64 / dt.as_secs_f64(),
+                );
                 tx.send(StreamResponse {
                     generated_text: Some(generated_text.clone()),
                     details: Some(StreamDetails {

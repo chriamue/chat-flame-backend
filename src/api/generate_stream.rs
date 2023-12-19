@@ -6,6 +6,7 @@ use axum::{
     Json,
 };
 use futures::stream::StreamExt;
+use log::debug;
 
 use crate::{config::Config, llm::create_text_generation};
 
@@ -25,7 +26,7 @@ pub async fn generate_stream_handler(
     config: State<Config>,
     Json(payload): Json<GenerateRequest>,
 ) -> impl IntoResponse {
-    println!("Received request: {:?}", payload);
+    debug!("Received request: {:?}", payload);
     let temperature = match &payload.parameters {
         Some(parameters) => parameters.temperature,
         None => None,
