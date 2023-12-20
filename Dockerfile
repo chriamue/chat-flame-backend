@@ -3,6 +3,7 @@ FROM rust:1.74 as builder
 RUN USER=root cargo new --bin chat-flame-backend
 WORKDIR /chat-flame-backend
 
+COPY ./.cargo ./.cargo
 COPY ./Cargo.lock* ./
 COPY ./Cargo.toml ./Cargo.toml
 
