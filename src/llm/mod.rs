@@ -1,7 +1,12 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/mistral/main.rs
 
+pub mod dummy_text_generator;
 pub mod models;
 mod text_generation;
+pub mod text_generator;
+
+pub use dummy_text_generator::DummyTextGenerator;
+pub use text_generator::TextGenerator;
 
 use std::path::PathBuf;
 
