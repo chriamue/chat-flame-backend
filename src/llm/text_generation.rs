@@ -1,5 +1,5 @@
 use super::Model;
-use crate::api::stream_response::{FinishReason, StreamDetails, StreamResponse, Token};
+use crate::api::model::{FinishReason, StreamDetails, StreamResponse, Token};
 
 use anyhow::{Error as E, Result};
 use candle_core::{DType, Device, Tensor};
@@ -204,6 +204,11 @@ impl TextGeneration {
                         })
                         .await
                         .unwrap();
+                        let dt = start_gen.elapsed();
+                        info!(
+                            "\n{generated_tokens} tokens generated ({:.2} token/s)",
+                            generated_tokens as f64 / dt.as_secs_f64(),
+                        );
                         return;
                     }
                     generated_text.push_str(&t);
@@ -227,11 +232,6 @@ impl TextGeneration {
                     .await
                     .unwrap();
                 }
-                let dt = start_gen.elapsed();
-                info!(
-                    "\n{generated_tokens} tokens generated ({:.2} token/s)",
-                    generated_tokens as f64 / dt.as_secs_f64(),
-                );
                 tx.send(StreamResponse {
                     generated_text: Some(generated_text.clone()),
                     details: Some(StreamDetails {
@@ -250,6 +250,11 @@ impl TextGeneration {
                 .await
                 .unwrap();
             }
+            let dt = start_gen.elapsed();
+            info!(
+                "\n{generated_tokens} tokens generated ({:.2} token/s)",
+                generated_tokens as f64 / dt.as_secs_f64(),
+            );
         });
 
         ReceiverStream::new(rx)

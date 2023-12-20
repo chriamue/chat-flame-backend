@@ -1,14 +1,10 @@
 use utoipa::OpenApi;
 
-use crate::api::{
-    generate_text::{GenerateRequest, GenerateResponse},
-    ErrorResponse,
-};
+use crate::api::model::ErrorResponse;
 
-use super::{
-    generate::CompatGenerateRequest,
-    generate_parameters::GenerateParameters,
-    stream_response::{FinishReason, StreamDetails, StreamResponse, Token},
+use super::model::{
+    CompatGenerateRequest, FinishReason, GenerateParameters, GenerateRequest, GenerateResponse,
+    StreamDetails, StreamResponse, Token,
 };
 
 #[derive(OpenApi)]

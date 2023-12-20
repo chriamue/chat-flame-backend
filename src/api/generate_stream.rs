@@ -1,5 +1,5 @@
-use std::vec;
-
+use super::model::GenerateRequest;
+use crate::{config::Config, llm::create_text_generation};
 use axum::{
     extract::State,
     response::{sse::Event, IntoResponse, Sse},
@@ -7,10 +7,7 @@ use axum::{
 };
 use futures::stream::StreamExt;
 use log::debug;
-
-use crate::{config::Config, llm::create_text_generation};
-
-use super::generate_text::GenerateRequest;
+use std::vec;
 
 /// Generate tokens
 #[utoipa::path(

@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 
-use super::ErrorResponse;
+use super::model::ErrorResponse;
 
 /// Health check endpoint
 #[utoipa::path(

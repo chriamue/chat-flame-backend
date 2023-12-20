@@ -1,25 +1,12 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
 use crate::config::Config;
 
 use super::{
-    generate_parameters::GenerateParameters, generate_stream::generate_stream_handler,
-    generate_text::GenerateRequest, ErrorResponse,
+    generate_stream::generate_stream_handler,
+    model::ErrorResponse,
+    model::{CompatGenerateRequest, GenerateRequest},
 };
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct CompatGenerateRequest {
-    #[schema(example = "My name is Olivier and I")]
-    pub inputs: String,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub parameters: Option<GenerateParameters>,
-
-    #[serde(default)]
-    pub stream: bool,
-}
 
 /// Generate tokens
 #[utoipa::path(

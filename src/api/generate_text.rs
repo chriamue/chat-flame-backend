@@ -1,25 +1,6 @@
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
-
+use super::model::{ErrorResponse, GenerateRequest, GenerateResponse};
 use crate::{config::Config, llm::create_text_generation};
-
-use super::{generate_parameters::GenerateParameters, ErrorResponse};
-
-#[derive(Deserialize, ToSchema, Debug)]
-pub struct GenerateRequest {
-    #[schema(example = "My name is John")]
-    pub inputs: String,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub parameters: Option<GenerateParameters>,
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct GenerateResponse {
-    pub generated_text: String,
-    // Add other fields as necessary
-}
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
 /// Generate tokens
 #[utoipa::path(
