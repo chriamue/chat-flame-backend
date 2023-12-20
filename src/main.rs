@@ -22,14 +22,20 @@ struct Opt {
     /// Optional text prompt for immediate text generation. If provided, runs text generation instead of starting the server.
     #[structopt(short, long)]
     prompt: Option<String>,
+
+    /// Optional length of the generated text. If not provided, defaults to 50.
+    #[structopt(short, long)]
+    sample_len: Option<usize>,
 }
 
-async fn generate_text(prompt: String, config: Config) {
+async fn generate_text(prompt: String, sample_len: Option<usize>, config: Config) {
     info!("Generating text for prompt: {}", prompt);
     let mut text_generation =
         chat_flame_backend::llm::create_text_generation(None, None, 0.0, 0, &config.cache_dir)
             .unwrap();
-    let generated_text = text_generation.run(&prompt, 50).unwrap();
+    let generated_text = text_generation
+        .run(&prompt, sample_len.unwrap_or(150))
+        .unwrap();
     println!("{}", generated_text.unwrap_or_default());
 }
 
@@ -57,7 +63,7 @@ async fn main() {
         Ok(config) => {
             info!("Loaded config: {:?}", config);
             if let Some(prompt) = opt.prompt {
-                generate_text(prompt, config).await;
+                generate_text(prompt, opt.sample_len, config).await;
                 return;
             } else {
                 start_server(config).await;

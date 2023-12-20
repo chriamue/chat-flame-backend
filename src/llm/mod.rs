@@ -22,6 +22,13 @@ pub enum Model {
 pub fn create_model(
     cache_dir: &Option<PathBuf>,
 ) -> Result<(Model, Device), Box<dyn std::error::Error>> {
+    info!(
+        "avx: {}, neon: {}, simd128: {}, f16c: {}",
+        candle_core::utils::with_avx(),
+        candle_core::utils::with_neon(),
+        candle_core::utils::with_simd128(),
+        candle_core::utils::with_f16c()
+    );
     let model_id = "lmz/candle-mistral".to_string();
     let revision = "main".to_string();
 
