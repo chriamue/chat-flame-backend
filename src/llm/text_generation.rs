@@ -7,7 +7,7 @@ use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::generation::LogitsProcessor;
 use futures::Stream;
 use log::{debug, info, trace};
-use std::{collections::HashSet, io::Write, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::ReceiverStream;
@@ -44,9 +44,19 @@ impl TextGeneration {
         }
     }
 
-    pub fn run(&mut self, prompt: &str, sample_len: usize) -> Result<Option<String>> {
-        let mut tokenizer = self.tokenizer.try_lock().unwrap();
-        let mut model = self.model.try_lock().unwrap();
+    fn process_tokens<F>(
+        tokenizer: &Mutex<TokenOutputStream>,
+        model: &Mutex<Model>,
+        prompt: String,
+        sample_len: usize,
+        stop_tokens: Option<Vec<String>>,
+        mut handle_token: F,
+    ) -> Result<()>
+    where
+        F: FnMut(String, usize, bool) -> Result<()>,
+    {
+        let mut tokenizer = tokenizer.try_lock().unwrap();
+        let mut model = model.try_lock().unwrap();
 
         tokenizer.clear();
         let mut tokens = tokenizer
@@ -55,60 +65,80 @@ impl TextGeneration {
             .map_err(E::msg)?
             .get_ids()
             .to_vec();
-        for &t in tokens.iter() {
-            if let Some(t) = tokenizer.next_token(t)? {
-                trace!("{t}")
-            }
-        }
-        let mut generated_tokens = 0usize;
-        let eos_token = match tokenizer.get_token("</s>") {
-            Some(token) => token,
-            None => anyhow::bail!("cannot find the </s> token"),
-        };
-        let start_gen = std::time::Instant::now();
+
+        let stop_token_ids: HashSet<u32> = stop_tokens
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|token| tokenizer.get_token(token))
+            .collect();
+        let repeat_penalty = 1.1;
+        let repeat_last_n = 64;
+
         let mut generated_text = String::new();
+        let mut logits_processor = LogitsProcessor::new(42, None, None);
+        let start_gen = std::time::Instant::now();
+
         for index in 0..sample_len {
             let context_size = if index > 0 { 1 } else { tokens.len() };
             let start_pos = tokens.len().saturating_sub(context_size);
             let ctxt = &tokens[start_pos..];
-            let input = Tensor::new(ctxt, &self.device)?.unsqueeze(0)?;
+            let input = Tensor::new(ctxt, &Device::Cpu)?.unsqueeze(0)?;
             let logits = match &mut *model {
                 Model::Mistral(m) => m.forward(&input, start_pos)?,
                 Model::Quantized(m) => m.forward(&input, start_pos)?,
             };
             let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
-            let logits = if self.repeat_penalty == 1. {
+            let logits = if repeat_penalty == 1. {
                 logits
             } else {
-                let start_at = tokens.len().saturating_sub(self.repeat_last_n);
+                let start_at = tokens.len().saturating_sub(repeat_last_n);
                 candle_transformers::utils::apply_repeat_penalty(
                     &logits,
-                    self.repeat_penalty,
+                    repeat_penalty,
                     &tokens[start_at..],
                 )?
             };
 
-            let next_token = self.logits_processor.sample(&logits)?;
+            let next_token = logits_processor.sample(&logits)?;
             tokens.push(next_token);
-            generated_tokens += 1;
-            if next_token == eos_token {
-                break;
-            }
-            if let Some(t) = tokenizer.next_token(next_token)? {
-                generated_text.push_str(&t);
 
-                trace!("{t}");
-                std::io::stdout().flush()?;
+            if let Some(t) = tokenizer.next_token(next_token)? {
+                if stop_token_ids.contains(&next_token) {
+                    info!(
+                        "\n{index} tokens generated ({:.2} token/s)",
+                        index as f64 / start_gen.elapsed().as_secs_f64(),
+                    );
+                    handle_token(generated_text.clone(), index, true)?;
+                    return Ok(());
+                }
+                generated_text.push_str(&t);
+                handle_token(t.clone(), index, false)?;
             }
-        }
-        let dt = start_gen.elapsed();
-        if let Some(rest) = tokenizer.decode_rest().map_err(E::msg)? {
-            debug!("{rest}");
         }
         info!(
-            "\n{generated_tokens} tokens generated ({:.2} token/s)",
-            generated_tokens as f64 / dt.as_secs_f64(),
+            "\n{sample_len} tokens generated ({:.2} token/s)",
+            sample_len as f64 / start_gen.elapsed().as_secs_f64(),
         );
+        Ok(())
+    }
+
+    pub fn run(&mut self, prompt: &str, sample_len: usize) -> Result<Option<String>> {
+        let mut generated_text = String::new();
+        Self::process_tokens(
+            &self.tokenizer,
+            &self.model,
+            prompt.to_string(),
+            sample_len,
+            None,
+            |text, _, is_final| {
+                if is_final {
+                    Ok(())
+                } else {
+                    generated_text.push_str(&text);
+                    Ok(())
+                }
+            },
+        )?;
         Ok(Some(generated_text))
     }
 
