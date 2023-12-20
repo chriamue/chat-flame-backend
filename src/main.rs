@@ -25,9 +25,11 @@ async fn main() {
 
     match load_config(&opt.config) {
         Ok(config) => {
-            // Initialize your application with config
-            info!("Running on port: {}", config.port);
+            info!("Loaded config: {:?}", config);
+            info!("preload model");
+            let _ = chat_flame_backend::llm::create_model(&config.cache_dir);
 
+            info!("Running on port: {}", config.port);
             let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
             let app = server(config);
 
