@@ -1,12 +1,15 @@
-use crate::api::model::{FinishReason, StreamDetails, StreamResponse, Token};
+use crate::{
+    api::model::{FinishReason, StreamDetails, StreamResponse, Token},
+    llm::token_generator::TokenGenerator,
+};
 
 use anyhow::{Error as E, Result};
-use candle_core::{DType, Device, Tensor};
+use candle_core::Device;
 use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
 use log::{debug, info, trace};
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::ReceiverStream;
@@ -65,11 +68,6 @@ impl TextGeneration {
             .get_ids()
             .to_vec();
 
-        let stop_token_ids: HashSet<u32> = stop_tokens
-            .unwrap_or_default()
-            .iter()
-            .filter_map(|token| tokenizer.get_token(token))
-            .collect();
         let repeat_penalty = 1.1;
         let repeat_last_n = 64;
 
@@ -77,29 +75,23 @@ impl TextGeneration {
         let mut logits_processor = LogitsProcessor::new(42, None, None);
         let start_gen = std::time::Instant::now();
 
-        for index in 0..sample_len {
-            let context_size = if index > 0 { 1 } else { tokens.len() };
-            let start_pos = tokens.len().saturating_sub(context_size);
-            let ctxt = &tokens[start_pos..];
-            let input = Tensor::new(ctxt, &Device::Cpu)?.unsqueeze(0)?;
-            let logits = model.forward(&input, start_pos)?;
-            let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
-            let logits = if repeat_penalty == 1. {
-                logits
-            } else {
-                let start_at = tokens.len().saturating_sub(repeat_last_n);
-                candle_transformers::utils::apply_repeat_penalty(
-                    &logits,
-                    repeat_penalty,
-                    &tokens[start_at..],
-                )?
-            };
+        let mut token_generator = TokenGenerator::new();
+        token_generator.set_stop_tokens(stop_tokens, &mut tokenizer);
 
-            let next_token = logits_processor.sample(&logits)?;
+        for index in 0..sample_len {
+            let next_token = token_generator
+                .next(
+                    &tokens,
+                    &mut logits_processor,
+                    &mut model,
+                    repeat_penalty,
+                    repeat_last_n,
+                )?
+                .unwrap();
             tokens.push(next_token);
 
             if let Some(t) = tokenizer.next_token(next_token)? {
-                if stop_token_ids.contains(&next_token) {
+                if token_generator.is_stop_token(&next_token) {
                     info!(
                         "\n{index} tokens generated ({:.2} token/s)",
                         index as f64 / start_gen.elapsed().as_secs_f64(),
@@ -151,10 +143,8 @@ impl TextGeneration {
         let model = self.model.clone();
         let prompt = prompt.to_string();
         let sample_len = sample_len as usize;
-        let device = self.device.clone();
         let repeat_last_n = self.repeat_last_n;
         let repeat_penalty = self.repeat_penalty;
-        let mut logits_processor = LogitsProcessor::new(42, None, None);
 
         tokio::spawn(async move {
             let mut tokenizer = tokenizer.try_lock().unwrap();
@@ -168,46 +158,31 @@ impl TextGeneration {
                 .get_ids()
                 .to_vec();
 
-            let mut generated_tokens = 0usize;
-            let stop_token_ids: HashSet<u32> = stop_tokens
-                .unwrap_or_default()
-                .iter()
-                .filter_map(|token| tokenizer.get_token(token))
-                .collect();
-            let start_gen = std::time::Instant::now();
             let mut generated_text = String::new();
+            let mut logits_processor = LogitsProcessor::new(42, None, None);
+            let start_gen = std::time::Instant::now();
+
+            let mut token_generator = TokenGenerator::new();
+            token_generator.set_stop_tokens(stop_tokens, &mut tokenizer);
+
+            let mut generated_tokens = 0;
 
             for index in 0..sample_len {
-                let context_size = if index > 0 { 1 } else { tokens.len() };
-                let start_pos = tokens.len().saturating_sub(context_size);
-                let ctxt = &tokens[start_pos..];
-                let input = Tensor::new(ctxt, &device).unwrap().unsqueeze(0).unwrap();
-                let logits = model.forward(&input, start_pos).unwrap();
-                let logits = logits
-                    .squeeze(0)
-                    .unwrap()
-                    .squeeze(0)
-                    .unwrap()
-                    .to_dtype(DType::F32)
-                    .unwrap();
-                let logits = if repeat_penalty == 1. {
-                    logits
-                } else {
-                    let start_at = tokens.len().saturating_sub(repeat_last_n);
-                    candle_transformers::utils::apply_repeat_penalty(
-                        &logits,
+                let next_token = token_generator
+                    .next(
+                        &tokens,
+                        &mut logits_processor,
+                        &mut model,
                         repeat_penalty,
-                        &tokens[start_at..],
+                        repeat_last_n,
                     )
                     .unwrap()
-                };
-
-                let next_token = logits_processor.sample(&logits).unwrap();
-                generated_tokens += 1;
+                    .unwrap();
                 tokens.push(next_token);
+                generated_tokens += 1;
 
                 if let Some(t) = tokenizer.next_token(next_token).unwrap() {
-                    if stop_token_ids.contains(&next_token) {
+                    if token_generator.is_stop_token(&next_token) {
                         tx.send(StreamResponse {
                             generated_text: Some(generated_text.clone()),
                             details: Some(StreamDetails {
