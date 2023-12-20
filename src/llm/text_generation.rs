@@ -1,10 +1,9 @@
-use super::Model;
 use crate::api::model::{FinishReason, StreamDetails, StreamResponse, Token};
 
 use anyhow::{Error as E, Result};
 use candle_core::{DType, Device, Tensor};
 use candle_examples::token_output_stream::TokenOutputStream;
-use candle_transformers::generation::LogitsProcessor;
+use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
 use log::{debug, info, trace};
 use std::{collections::HashSet, sync::Arc};
@@ -13,7 +12,7 @@ use tokio::sync::Mutex;
 use tokio_stream::wrappers::ReceiverStream;
 
 pub struct TextGeneration {
-    model: Arc<Mutex<Model>>,
+    model: Arc<Mutex<ModelWeights>>,
     device: Device,
     tokenizer: Arc<Mutex<TokenOutputStream>>,
     logits_processor: LogitsProcessor,
@@ -24,7 +23,7 @@ pub struct TextGeneration {
 impl TextGeneration {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        model: Model,
+        model: ModelWeights,
         tokenizer: Tokenizer,
         seed: u64,
         temp: Option<f64>,
@@ -46,7 +45,7 @@ impl TextGeneration {
 
     fn process_tokens<F>(
         tokenizer: &Mutex<TokenOutputStream>,
-        model: &Mutex<Model>,
+        model: &Mutex<ModelWeights>,
         prompt: String,
         sample_len: usize,
         stop_tokens: Option<Vec<String>>,
@@ -83,10 +82,7 @@ impl TextGeneration {
             let start_pos = tokens.len().saturating_sub(context_size);
             let ctxt = &tokens[start_pos..];
             let input = Tensor::new(ctxt, &Device::Cpu)?.unsqueeze(0)?;
-            let logits = match &mut *model {
-                Model::Mistral(m) => m.forward(&input, start_pos)?,
-                Model::Quantized(m) => m.forward(&input, start_pos)?,
-            };
+            let logits = model.forward(&input, start_pos)?;
             let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
             let logits = if repeat_penalty == 1. {
                 logits
@@ -186,10 +182,7 @@ impl TextGeneration {
                 let start_pos = tokens.len().saturating_sub(context_size);
                 let ctxt = &tokens[start_pos..];
                 let input = Tensor::new(ctxt, &device).unwrap().unsqueeze(0).unwrap();
-                let logits = match &mut *model {
-                    Model::Mistral(m) => m.forward(&input, start_pos).unwrap(),
-                    Model::Quantized(m) => m.forward(&input, start_pos).unwrap(),
-                };
+                let logits = model.forward(&input, start_pos).unwrap();
                 let logits = logits
                     .squeeze(0)
                     .unwrap()

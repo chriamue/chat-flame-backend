@@ -1,15 +1,16 @@
 use chat_flame_backend::{
     config::{load_config, Config},
+    llm::models::Models,
     server::server,
 };
+use clap::Parser;
 use log::{error, info};
 use std::net::SocketAddr;
-use structopt::StructOpt;
 
 /// Backend server for chat applications using Candle AI framework.
 /// This server is optimized for CPU-only environments and provides a robust, efficient, and scalable service.
-#[derive(StructOpt, Debug)]
-#[structopt(name = "ChatFlameBackend")]
+#[derive(Parser, Debug)]
+#[command(name = "ChatFlameBackend")]
 struct Opt {
     /// Sets a custom config file. If not specified, 'config.yml' is used as the default.
     #[structopt(
@@ -26,23 +27,33 @@ struct Opt {
     /// Optional length of the generated text. If not provided, defaults to 50.
     #[structopt(short, long)]
     sample_len: Option<usize>,
+
+    /// Optional model to use for text generation. If not provided, defaults to 7b.
+    #[structopt(long, default_value = "7b-mistral")]
+    model: Models,
 }
 
-async fn generate_text(prompt: String, sample_len: Option<usize>, config: Config) {
+async fn generate_text(prompt: String, sample_len: Option<usize>, model: Models, config: Config) {
     info!("Generating text for prompt: {}", prompt);
-    let mut text_generation =
-        chat_flame_backend::llm::create_text_generation(None, None, 0.0, 0, &config.cache_dir)
-            .unwrap();
+    let mut text_generation = chat_flame_backend::llm::create_text_generation(
+        model,
+        None,
+        None,
+        0.0,
+        0,
+        &config.cache_dir,
+    )
+    .unwrap();
     let generated_text = text_generation
         .run(&prompt, sample_len.unwrap_or(150))
         .unwrap();
     println!("{}", generated_text.unwrap_or_default());
 }
 
-async fn start_server(config: Config) {
+async fn start_server(model: Models, config: Config) {
     info!("Starting server");
     info!("preload model");
-    let _ = chat_flame_backend::llm::create_model(&config.cache_dir);
+    let _ = chat_flame_backend::llm::create_model(model, &config.cache_dir);
 
     info!("Running on port: {}", config.port);
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
@@ -57,16 +68,16 @@ async fn start_server(config: Config) {
 #[tokio::main]
 async fn main() {
     pretty_env_logger::init();
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     match load_config(&opt.config) {
         Ok(config) => {
             info!("Loaded config: {:?}", config);
             if let Some(prompt) = opt.prompt {
-                generate_text(prompt, opt.sample_len, config).await;
+                generate_text(prompt, opt.sample_len, opt.model, config).await;
                 return;
             } else {
-                start_server(config).await;
+                start_server(opt.model, config).await;
             }
         }
         Err(e) => {
