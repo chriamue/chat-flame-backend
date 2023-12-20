@@ -60,8 +60,6 @@ impl TextGeneration {
                 trace!("{t}")
             }
         }
-        std::io::stdout().flush()?;
-
         let mut generated_tokens = 0usize;
         let eos_token = match tokenizer.get_token("</s>") {
             Some(token) => token,

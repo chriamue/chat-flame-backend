@@ -1,4 +1,7 @@
-use chat_flame_backend::{config::load_config, server::server};
+use chat_flame_backend::{
+    config::{load_config, Config},
+    server::server,
+};
 use log::{error, info};
 use std::net::SocketAddr;
 use structopt::StructOpt;
@@ -16,6 +19,33 @@ struct Opt {
         help = "Specify the path to the configuration file"
     )]
     config: String,
+    /// Optional text prompt for immediate text generation. If provided, runs text generation instead of starting the server.
+    #[structopt(short, long)]
+    prompt: Option<String>,
+}
+
+async fn generate_text(prompt: String, config: Config) {
+    info!("Generating text for prompt: {}", prompt);
+    let mut text_generation =
+        chat_flame_backend::llm::create_text_generation(None, None, 0.0, 0, &config.cache_dir)
+            .unwrap();
+    let generated_text = text_generation.run(&prompt, 50).unwrap();
+    println!("{}", generated_text.unwrap_or_default());
+}
+
+async fn start_server(config: Config) {
+    info!("Starting server");
+    info!("preload model");
+    let _ = chat_flame_backend::llm::create_model(&config.cache_dir);
+
+    info!("Running on port: {}", config.port);
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
+    let app = server(config);
+
+    info!("Server running at http://{}", addr);
+
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 #[tokio::main]
@@ -26,17 +56,12 @@ async fn main() {
     match load_config(&opt.config) {
         Ok(config) => {
             info!("Loaded config: {:?}", config);
-            info!("preload model");
-            let _ = chat_flame_backend::llm::create_model(&config.cache_dir);
-
-            info!("Running on port: {}", config.port);
-            let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-            let app = server(config);
-
-            info!("Server running at http://{}", addr);
-
-            let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-            axum::serve(listener, app).await.unwrap();
+            if let Some(prompt) = opt.prompt {
+                generate_text(prompt, config).await;
+                return;
+            } else {
+                start_server(config).await;
+            }
         }
         Err(e) => {
             error!("Failed to load config: {}", e);
