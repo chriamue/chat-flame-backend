@@ -5,20 +5,20 @@ use crate::{
 
 use anyhow::{Error as E, Result};
 use candle_core::Device;
-use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
 use log::{debug, info, trace};
+use rayon::prelude::*;
 use std::sync::Arc;
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::ReceiverStream;
 
+use super::token_output_stream::TokenOutputStream;
+
 pub struct TextGeneration {
     model: Arc<Mutex<ModelWeights>>,
-    device: Device,
     tokenizer: Arc<Mutex<TokenOutputStream>>,
-    logits_processor: LogitsProcessor,
     repeat_penalty: f32,
     repeat_last_n: usize,
 }
@@ -33,16 +33,14 @@ impl TextGeneration {
         top_p: Option<f64>,
         repeat_penalty: f32,
         repeat_last_n: usize,
-        device: &Device,
+        _device: &Device,
     ) -> Self {
-        let logits_processor = LogitsProcessor::new(seed, temp, top_p);
+        let _logits_processor = LogitsProcessor::new(seed, temp, top_p);
         Self {
             model: Arc::new(Mutex::new(model)),
             tokenizer: Arc::new(Mutex::new(TokenOutputStream::new(tokenizer))),
-            logits_processor,
             repeat_penalty,
             repeat_last_n,
-            device: device.clone(),
         }
     }
 
@@ -59,57 +57,56 @@ impl TextGeneration {
     {
         let mut tokenizer = tokenizer.try_lock().unwrap();
         let mut model = model.try_lock().unwrap();
+        let mut generated_tokens = vec![];
 
         tokenizer.clear();
-        let mut tokens = tokenizer
-            .tokenizer()
-            .encode(prompt, true)
-            .map_err(E::msg)?
-            .get_ids()
-            .to_vec();
+        let binding = tokenizer.tokenizer().encode(prompt, true).map_err(E::msg)?;
+        generated_tokens.extend(binding.get_ids().to_vec());
 
         let repeat_penalty = 1.1;
         let repeat_last_n = 64;
-
-        let mut generated_text = String::new();
         let mut logits_processor = LogitsProcessor::new(42, None, None);
         let start_gen = std::time::Instant::now();
 
         let mut token_generator = TokenGenerator::new();
         token_generator.set_stop_tokens(stop_tokens, &mut tokenizer);
 
-        for index in 0..sample_len {
-            let next_token = token_generator
-                .next(
-                    &tokens,
+        for _ in 0..sample_len {
+            let next_token = {
+                token_generator.next(
+                    &generated_tokens,
                     &mut logits_processor,
                     &mut model,
                     repeat_penalty,
                     repeat_last_n,
                 )?
-                .unwrap();
-            tokens.push(next_token);
+            };
 
-            if let Some(t) = tokenizer.next_token(next_token)? {
-                if token_generator.is_stop_token(&next_token) {
-                    info!(
-                        "\n{index} tokens generated ({:.2} token/s)",
-                        index as f64 / start_gen.elapsed().as_secs_f64(),
-                    );
-                    handle_token(generated_text.clone(), index, true)?;
-                    return Ok(());
+            if let Some(token) = next_token {
+                generated_tokens.push(token);
+                if token_generator.is_stop_token(&token) {
+                    break;
                 }
-                generated_text.push_str(&t);
-                handle_token(t.clone(), index, false)?;
             }
         }
+
+        let generated_text: Vec<String> = generated_tokens
+            .par_iter()
+            .filter_map(|&token| tokenizer.decode(&[token]).ok())
+            .collect();
+
+        for (index, text) in generated_text.iter().enumerate() {
+            handle_token(text.clone(), index, false)?;
+        }
+
         info!(
-            "\n{sample_len} tokens generated ({:.2} token/s)",
-            sample_len as f64 / start_gen.elapsed().as_secs_f64(),
+            "{} tokens generated ({:.2} token/s)",
+            generated_tokens.len(),
+            generated_tokens.len() as f64 / start_gen.elapsed().as_secs_f64(),
         );
+
         Ok(())
     }
-
     pub fn run(&mut self, prompt: &str, sample_len: usize) -> Result<Option<String>> {
         let mut generated_text = String::new();
         Self::process_tokens(

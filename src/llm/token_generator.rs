@@ -2,8 +2,9 @@ use std::collections::HashSet;
 
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
-use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
+
+use super::token_output_stream::TokenOutputStream;
 
 #[derive(Default)]
 pub struct TokenGenerator {

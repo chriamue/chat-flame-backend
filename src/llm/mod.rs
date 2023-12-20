@@ -5,6 +5,7 @@ pub mod models;
 mod text_generation;
 pub mod text_generator;
 pub mod token_generator;
+pub mod token_output_stream;
 
 pub use dummy_text_generator::DummyTextGenerator;
 pub use text_generator::TextGenerator;
