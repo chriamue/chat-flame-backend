@@ -26,7 +26,6 @@ pub enum Models {
     Leo7b,
     #[serde(rename = "13b-leo")]
     Leo13b,
-    #[default]
     #[serde(rename = "7b-mistral")]
     Mistral7b,
     #[serde(rename = "7b-mistral-instruct")]
@@ -35,6 +34,7 @@ pub enum Models {
     Zephyr7bAlpha,
     #[serde(rename = "7b-zephyr-b")]
     Zephyr7bBeta,
+    #[default]
     #[serde(rename = "7b-open-chat-3.5")]
     OpenChat35,
     #[serde(rename = "7b-starling-a")]

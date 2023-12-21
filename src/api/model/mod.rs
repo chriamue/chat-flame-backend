@@ -66,7 +66,8 @@ pub struct StreamResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub generated_text: Option<String>,
     pub token: Token,
-    pub top_tokens: Vec<Token>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub top_tokens: Option<Vec<Token>>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]

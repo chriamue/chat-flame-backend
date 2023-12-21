@@ -15,7 +15,17 @@ cargo build --release
 cargo run --release
 ```
 
-### Testing
+### Docker
+
+```bash
+docker-compose up --build
+```
+
+Visit http://localhost:8080/swagger-ui for the swagger ui.
+
+## Testing
+
+### Test using the shell
 
 ```bash
 cargo test
@@ -35,13 +45,17 @@ or the stream endpoint
 curl -X POST -H "Content-Type: application/json" -d '{"inputs": "Your input text"}' http://localhost:8080/generate_stream
 ```
 
-### Docker
+### Test using python
+
+You can find a detailed documentation on how to use the python client on [huggingface](https://huggingface.co/docs/text-generation-inference/basic_tutorials/consuming_tgi#inference-client).
 
 ```bash
-docker-compose up --build
+virtualenv .venv
+source .venv/bin/activate
+pip install huggingface-hub
+python test.py
 ```
 
-Visit http://localhost:8080/swagger-ui for the swagger ui.
 
 ## Supported Models
 

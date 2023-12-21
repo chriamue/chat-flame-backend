@@ -28,7 +28,7 @@ struct Opt {
     #[structopt(short, long)]
     sample_len: Option<usize>,
 
-    /// Optional model to use for text generation. If not provided, defaults to 7b.
+    /// Optional model to use for text generation. If not provided, defaults to 7b-open-chat-3.5.
     #[structopt(long)]
     model: Option<Models>,
 }

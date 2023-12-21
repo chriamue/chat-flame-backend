@@ -8,7 +8,6 @@ use candle_core::Device;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
 use log::{debug, info, trace};
-use rayon::prelude::*;
 use std::sync::Arc;
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
@@ -44,6 +43,12 @@ impl TextGeneration {
         }
     }
 
+    fn prepare_tokens(tokenizer: &mut TokenOutputStream, prompt: String) -> Result<Vec<u32>> {
+        tokenizer.clear();
+        let binding = tokenizer.tokenizer().encode(prompt, true).map_err(E::msg)?;
+        Ok(binding.get_ids().to_vec())
+    }
+
     fn process_tokens<F>(
         tokenizer: &Mutex<TokenOutputStream>,
         model: &Mutex<ModelWeights>,
@@ -57,11 +62,7 @@ impl TextGeneration {
     {
         let mut tokenizer = tokenizer.try_lock().unwrap();
         let mut model = model.try_lock().unwrap();
-        let mut generated_tokens = vec![];
-
-        tokenizer.clear();
-        let binding = tokenizer.tokenizer().encode(prompt, true).map_err(E::msg)?;
-        generated_tokens.extend(binding.get_ids().to_vec());
+        let mut generated_tokens = Self::prepare_tokens(&mut tokenizer, prompt).unwrap();
 
         let repeat_penalty = 1.1;
         let repeat_last_n = 64;
@@ -70,6 +71,8 @@ impl TextGeneration {
 
         let mut token_generator = TokenGenerator::new();
         token_generator.set_stop_tokens(stop_tokens, &mut tokenizer);
+
+        let mut generated_text: Vec<String> = Vec::new();
 
         for _ in 0..sample_len {
             let next_token = {
@@ -84,16 +87,12 @@ impl TextGeneration {
 
             if let Some(token) = next_token {
                 generated_tokens.push(token);
+                generated_text.push(tokenizer.next_token(token).unwrap_or_default().unwrap());
                 if token_generator.is_stop_token(&token) {
                     break;
                 }
             }
         }
-
-        let generated_text: Vec<String> = generated_tokens
-            .par_iter()
-            .filter_map(|&token| tokenizer.decode(&[token]).ok())
-            .collect();
 
         for (index, text) in generated_text.iter().enumerate() {
             handle_token(text.clone(), index, false)?;
@@ -107,6 +106,7 @@ impl TextGeneration {
 
         Ok(())
     }
+
     pub fn run(&mut self, prompt: &str, sample_len: usize) -> Result<Option<String>> {
         let mut generated_text = String::new();
         Self::process_tokens(
@@ -193,7 +193,7 @@ impl TextGeneration {
                                 special: true,
                                 id: index as i32,
                             },
-                            top_tokens: Vec::new(),
+                            top_tokens: None,
                         })
                         .await
                         .unwrap();
@@ -215,12 +215,7 @@ impl TextGeneration {
                             special: false,
                             id: index as i32,
                         },
-                        top_tokens: vec![Token {
-                            text: t.clone(),
-                            logprob: Some(1.0),
-                            special: false,
-                            id: index as i32,
-                        }],
+                        top_tokens: None,
                     })
                     .await
                     .unwrap();
@@ -238,7 +233,7 @@ impl TextGeneration {
                         special: true,
                         id: sample_len as i32,
                     },
-                    top_tokens: Vec::new(),
+                    top_tokens: None,
                 })
                 .await
                 .unwrap();
