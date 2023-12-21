@@ -13,7 +13,8 @@ use super::model::ErrorResponse;
     responses(
         (status = 200, description = "Everything is working fine"),
         (status = 503, description = "Text generation inference is down", body = ErrorResponse, example = json!(ErrorResponse { error: String::from("unhealthy"), error_type: Some(String::from("healthcheck")) })),
-    )
+    ),
+    tag = "Text Generation Inference"
 )]
 pub async fn health_check() -> impl IntoResponse {
     if check_server_health() {

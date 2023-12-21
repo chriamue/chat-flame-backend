@@ -167,3 +167,57 @@ pub struct CompatGenerateRequest {
 fn default_true() -> bool {
     true
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct Info {
+    #[serde(rename = "docker_label", skip_serializing_if = "Option::is_none")]
+    pub docker_label: Option<String>,
+
+    #[serde(rename = "max_batch_total_tokens")]
+    pub max_batch_total_tokens: i32,
+
+    #[serde(rename = "max_best_of")]
+    pub max_best_of: i32,
+
+    #[serde(rename = "max_concurrent_requests")]
+    pub max_concurrent_requests: i32,
+
+    #[serde(rename = "max_input_length")]
+    pub max_input_length: i32,
+
+    #[serde(rename = "max_stop_sequences")]
+    pub max_stop_sequences: i32,
+
+    #[serde(rename = "max_total_tokens")]
+    pub max_total_tokens: i32,
+
+    #[serde(rename = "max_waiting_tokens")]
+    pub max_waiting_tokens: i32,
+
+    #[serde(rename = "model_device_type")]
+    pub model_device_type: String,
+
+    #[serde(rename = "model_dtype")]
+    pub model_dtype: String,
+
+    #[serde(rename = "model_id")]
+    pub model_id: String,
+
+    #[serde(rename = "model_pipeline_tag", skip_serializing_if = "Option::is_none")]
+    pub model_pipeline_tag: Option<String>,
+
+    #[serde(rename = "model_sha", skip_serializing_if = "Option::is_none")]
+    pub model_sha: Option<String>,
+
+    #[serde(rename = "sha", skip_serializing_if = "Option::is_none")]
+    pub sha: Option<String>,
+
+    #[serde(rename = "validation_workers")]
+    pub validation_workers: i32,
+
+    #[serde(rename = "version")]
+    pub version: String,
+
+    #[serde(rename = "waiting_served_ratio")]
+    pub waiting_served_ratio: f32,
+}
