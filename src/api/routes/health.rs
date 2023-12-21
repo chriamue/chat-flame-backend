@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 
-use super::model::ErrorResponse;
+use crate::api::model::ErrorResponse;
 
 /// Health check endpoint
 #[utoipa::path(
@@ -16,7 +16,7 @@ use super::model::ErrorResponse;
     ),
     tag = "Text Generation Inference"
 )]
-pub async fn health_check() -> impl IntoResponse {
+pub async fn get_health_handler() -> impl IntoResponse {
     if check_server_health() {
         // Server is healthy
         Response::builder()
