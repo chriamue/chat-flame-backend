@@ -1,7 +1,9 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/mistral/main.rs
 
 pub mod dummy_text_generator;
+mod generate_parameter;
 pub mod models;
+pub mod sampler;
 mod text_generation;
 pub mod text_generator;
 pub mod token_generator;

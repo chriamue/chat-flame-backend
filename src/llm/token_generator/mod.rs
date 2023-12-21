@@ -6,6 +6,8 @@ use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::
 
 use super::token_output_stream::TokenOutputStream;
 
+mod dummy;
+
 #[derive(Default)]
 pub struct TokenGenerator {
     index: usize,
@@ -65,5 +67,44 @@ impl TokenGenerator {
 
     pub fn is_stop_token(&self, token: &u32) -> bool {
         self.stop_tokens.contains(token)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum FinishReason {
+    Length,
+    EosToken,
+    StopSequence,
+}
+
+pub type TokenProbability = (u32, f32);
+
+#[derive(Debug, PartialEq)]
+pub enum TokenGeneratorResult {
+    Token(TokenProbability),
+    Finish(FinishReason),
+}
+
+pub trait TokenGeneratorTrait {
+    fn next(&mut self) -> TokenGeneratorResult;
+}
+
+pub struct TokenGenerator2 {
+    index: usize,
+    stop_tokens: HashSet<u32>,
+}
+
+impl TokenGenerator2 {
+    pub fn new() -> Self {
+        Self {
+            index: 0,
+            stop_tokens: HashSet::new(),
+        }
+    }
+}
+
+impl TokenGeneratorTrait for TokenGenerator2 {
+    fn next(&mut self) -> TokenGeneratorResult {
+        TokenGeneratorResult::Token((0, 0.0))
     }
 }
