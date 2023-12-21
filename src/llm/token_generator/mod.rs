@@ -4,7 +4,10 @@ use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 
-use super::token_output_stream::TokenOutputStream;
+use super::{
+    generate_parameter::GenerateParameter, model_processor::ModelProcessor, sampler::Sampler,
+    token_output_stream::TokenOutputStream,
+};
 
 mod dummy;
 
@@ -86,25 +89,104 @@ pub enum TokenGeneratorResult {
 }
 
 pub trait TokenGeneratorTrait {
-    fn next(&mut self) -> TokenGeneratorResult;
+    fn next(&mut self) -> Result<TokenGeneratorResult>;
 }
 
 pub struct TokenGenerator2 {
     index: usize,
     stop_tokens: HashSet<u32>,
+    parameter: GenerateParameter,
+    tokens: Vec<u32>,
+    sampler: Box<dyn Sampler>,
+    model: Box<dyn ModelProcessor>,
 }
 
 impl TokenGenerator2 {
-    pub fn new() -> Self {
+    pub fn new(
+        tokens: Vec<u32>,
+        stop_tokens: HashSet<u32>,
+        parameter: GenerateParameter,
+        model: Box<dyn ModelProcessor>,
+        sampler: Box<dyn Sampler>,
+    ) -> Self {
         Self {
             index: 0,
-            stop_tokens: HashSet::new(),
+            stop_tokens,
+            parameter,
+            tokens,
+            model,
+            sampler,
         }
     }
 }
 
 impl TokenGeneratorTrait for TokenGenerator2 {
-    fn next(&mut self) -> TokenGeneratorResult {
-        TokenGeneratorResult::Token((0, 0.0))
+    fn next(&mut self) -> Result<TokenGeneratorResult> {
+        if self.index >= self.parameter.max_new_tokens {
+            return Ok(TokenGeneratorResult::Finish(FinishReason::Length));
+        }
+
+        let next_token = {
+            let input = Tensor::new(self.tokens.as_slice(), &Device::Cpu)?.unsqueeze(0)?;
+            let logits = self.model.forward(&input, 0)?;
+            let logits = logits.squeeze(0)?;
+            self.sampler.sample(&logits)?
+        };
+
+        if self.stop_tokens.contains(&next_token) {
+            return Ok(TokenGeneratorResult::Finish(FinishReason::EosToken));
+        }
+        self.index += 1;
+        Ok(TokenGeneratorResult::Token((next_token, 1.0)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::llm::{model_processor::DummyModelProcessor, sampler::DummySampler};
+
+    use super::*;
+
+    #[test]
+    fn test_token_generator_finish() {
+        let mut token_generator = TokenGenerator2::new(
+            vec![0, 1, 2],
+            HashSet::new(),
+            GenerateParameter { max_new_tokens: 10 },
+            Box::new(DummyModelProcessor::new()),
+            Box::new(DummySampler::new()),
+        );
+        for index in 0..10 {
+            assert_eq!(
+                token_generator.next().unwrap(),
+                TokenGeneratorResult::Token((index, 1.0))
+            );
+        }
+        assert_eq!(
+            token_generator.next().unwrap(),
+            TokenGeneratorResult::Finish(FinishReason::Length)
+        );
+    }
+
+    #[test]
+    fn test_token_generator_eos_token() {
+        let stop_token = 3;
+        let mut token_generator = TokenGenerator2::new(
+            vec![0, 1, 2],
+            vec![stop_token].into_iter().collect(),
+            GenerateParameter { max_new_tokens: 10 },
+            Box::new(DummyModelProcessor::new()),
+            Box::new(DummySampler::new()),
+        );
+        for index in 0..3 {
+            assert_eq!(
+                token_generator.next().unwrap(),
+                TokenGeneratorResult::Token((index, 1.0))
+            );
+        }
+        assert_eq!(
+            token_generator.next().unwrap(),
+            TokenGeneratorResult::Finish(FinishReason::EosToken)
+        );
     }
 }

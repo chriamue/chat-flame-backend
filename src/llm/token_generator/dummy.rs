@@ -1,9 +1,10 @@
-use candle_core::{Device, Tensor};
-
 use crate::llm::{
     generate_parameter::GenerateParameter,
+    model_processor::{DummyModelProcessor, ModelProcessor},
     sampler::{DummySampler, Sampler},
 };
+use anyhow::Result;
+use candle_core::{Device, Tensor};
 
 use super::{FinishReason, TokenGeneratorResult, TokenGeneratorTrait};
 
@@ -11,30 +12,32 @@ struct DummyTokenGenerator {
     parameter: GenerateParameter,
     index: usize,
     sampler: Box<dyn Sampler>,
+    model: Box<dyn ModelProcessor>,
 }
 
 impl DummyTokenGenerator {
     pub fn new(parameter: GenerateParameter) -> Self {
         let sampler = Box::new(DummySampler::new());
+        let model = Box::new(DummyModelProcessor::new());
         DummyTokenGenerator {
             parameter,
             index: 0,
             sampler,
+            model,
         }
     }
 }
 
 impl TokenGeneratorTrait for DummyTokenGenerator {
-    fn next(&mut self) -> TokenGeneratorResult {
+    fn next(&mut self) -> Result<TokenGeneratorResult> {
         self.index += 1;
         if self.index > self.parameter.max_new_tokens {
-            return TokenGeneratorResult::Finish(FinishReason::Length);
+            return Ok(TokenGeneratorResult::Finish(FinishReason::Length));
         }
-        let token = self
-            .sampler
-            .sample(&Tensor::new(&[1.0], &Device::Cpu).unwrap())
-            .unwrap();
-        TokenGeneratorResult::Token((token, 1.0))
+        let tensor = Tensor::new(&[0.0], &Device::Cpu).unwrap();
+        let logits = self.model.forward(&tensor, self.index).unwrap();
+        let token = self.sampler.sample(&logits).unwrap();
+        Ok(TokenGeneratorResult::Token((token, 1.0)))
     }
 }
 
@@ -48,12 +51,12 @@ mod tests {
             DummyTokenGenerator::new(GenerateParameter { max_new_tokens: 10 });
         for index in 0..10 {
             assert_eq!(
-                token_generator.next(),
+                token_generator.next().unwrap(),
                 TokenGeneratorResult::Token((index, 1.0))
             );
         }
         assert_eq!(
-            token_generator.next(),
+            token_generator.next().unwrap(),
             TokenGeneratorResult::Finish(FinishReason::Length)
         );
     }
