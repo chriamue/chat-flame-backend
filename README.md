@@ -61,7 +61,8 @@ The following table shows the performance metrics of the model on different syst
 | Model            | System                     | Tokens per Second |
 | ---------------- | -------------------------- | ----------------- |
 | 7b-open-chat-3.5 | AMD 7900X3D (12 Core) 64GB | 9.4 tokens/s      |
-| 7b-open-chat-3.5 | AMD 5600G (8 Core VM) 16GB | 2.85 tokens/s     |
+| 7b-open-chat-3.5 | AMD 5600G (8 Core VM) 16GB | 2.8 tokens/s      |
+| 13b (llama2 13b) | AMD 7900X3D (12 Core) 64GB | 5.2 tokens/s      |
 
 ## Todo
 
