@@ -1,4 +1,4 @@
-use super::model::GenerateRequest;
+use crate::api::model::GenerateRequest;
 use crate::{config::Config, llm::create_text_generation};
 use axum::{
     extract::State,

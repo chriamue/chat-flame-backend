@@ -1,12 +1,11 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
-use crate::config::Config;
-
-use super::{
-    generate_stream::generate_stream_handler,
-    model::ErrorResponse,
-    model::{CompatGenerateRequest, GenerateRequest},
+use crate::{
+    api::model::{CompatGenerateRequest, ErrorResponse, GenerateRequest},
+    config::Config,
 };
+
+use super::generate_stream::generate_stream_handler;
 
 /// Generate tokens
 #[utoipa::path(

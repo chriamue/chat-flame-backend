@@ -7,10 +7,8 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     api::{
-        generate::generate_handler,
-        generate_stream::generate_stream_handler,
-        generate_text::generate_text_handler,
         openapi::ApiDoc,
+        routes::{generate_handler, generate_stream_handler, generate_text_handler},
         routes::{get_health_handler, get_info_handler},
     },
     config::Config,

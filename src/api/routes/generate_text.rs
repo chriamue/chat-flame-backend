@@ -1,5 +1,8 @@
-use super::model::{ErrorResponse, GenerateRequest, GenerateResponse};
-use crate::{config::Config, llm::create_text_generation};
+use crate::{
+    api::model::{ErrorResponse, GenerateRequest, GenerateResponse},
+    config::Config,
+    llm::create_text_generation,
+};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
 /// Generate tokens

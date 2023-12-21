@@ -9,7 +9,7 @@ use super::model::{
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(super::generate_text::generate_text_handler, super::generate_stream::generate_stream_handler, super::routes::health::get_health_handler, super::routes::info::get_info_handler),
+    paths(super::routes::generate_text::generate_text_handler, super::routes::generate_stream::generate_stream_handler, super::routes::health::get_health_handler, super::routes::info::get_info_handler),
     components(
         schemas(CompatGenerateRequest, GenerateRequest, GenerateResponse, GenerateParameters, ErrorResponse, StreamResponse,
             StreamDetails, Token, FinishReason, Info)

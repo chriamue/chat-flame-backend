@@ -1,4 +1,10 @@
+pub mod generate;
+pub mod generate_stream;
+pub mod generate_text;
 pub mod health;
 pub mod info;
+pub use generate::generate_handler;
+pub use generate_stream::generate_stream_handler;
+pub use generate_text::generate_text_handler;
 pub use health::get_health_handler;
 pub use info::get_info_handler;
