@@ -37,3 +37,4 @@ utoipa-swagger-ui = { version = "5", features = ["axum"] }
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["full", "test-util"] }
+axum-test = "14.0.0"

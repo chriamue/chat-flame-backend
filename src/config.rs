@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::llm::models::Models;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Config {
     pub port: u16,
     pub cache_dir: Option<PathBuf>,
