@@ -2,6 +2,7 @@
 
 pub mod dummy_text_generator;
 mod generate_parameter;
+pub mod model_processor;
 pub mod models;
 pub mod sampler;
 mod text_generation;
