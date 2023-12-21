@@ -8,7 +8,7 @@ use candle_core::{Device, Tensor};
 
 use super::{FinishReason, TokenGeneratorResult, TokenGeneratorTrait};
 
-struct DummyTokenGenerator {
+pub struct DummyTokenGenerator {
     parameter: GenerateParameter,
     index: usize,
     sampler: Box<dyn Sampler>,
@@ -29,6 +29,9 @@ impl DummyTokenGenerator {
 }
 
 impl TokenGeneratorTrait for DummyTokenGenerator {
+    fn init(&mut self, _prompt_tokens: Vec<u32>) -> Result<()> {
+        Ok(())
+    }
     fn next(&mut self) -> Result<TokenGeneratorResult> {
         self.index += 1;
         if self.index > self.parameter.max_new_tokens {

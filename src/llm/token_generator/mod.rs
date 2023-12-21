@@ -6,10 +6,10 @@ use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::
 
 use super::{
     generate_parameter::GenerateParameter, model_processor::ModelProcessor, sampler::Sampler,
-    token_output_stream::TokenOutputStream,
+    token_output_stream::TokenOutputStream, FinishReason,
 };
 
-mod dummy;
+pub mod dummy;
 
 #[derive(Default)]
 pub struct TokenGenerator {
@@ -73,13 +73,6 @@ impl TokenGenerator {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum FinishReason {
-    Length,
-    EosToken,
-    StopSequence,
-}
-
 pub type TokenProbability = (u32, f32);
 
 #[derive(Debug, PartialEq)]
@@ -89,6 +82,7 @@ pub enum TokenGeneratorResult {
 }
 
 pub trait TokenGeneratorTrait {
+    fn init(&mut self, prompt_tokens: Vec<u32>) -> Result<()>;
     fn next(&mut self) -> Result<TokenGeneratorResult>;
 }
 
@@ -104,23 +98,20 @@ pub struct TokenGenerator2 {
 
 impl TokenGenerator2 {
     pub fn new(
-        prompt_tokens: Vec<u32>,
         stop_tokens: HashSet<u32>,
         parameter: GenerateParameter,
         model: Box<dyn ModelProcessor>,
         sampler: Box<dyn Sampler>,
     ) -> Self {
-        let mut token_generator = Self {
+        Self {
             index: 0,
             stop_tokens,
             parameter,
-            prompt_tokens,
+            prompt_tokens: Vec::new(),
             model,
             sampler,
             next_token: None,
-        };
-        token_generator.next_token = Some(token_generator.next_token().unwrap_or_default());
-        token_generator
+        }
     }
 }
 
@@ -137,6 +128,12 @@ impl TokenGenerator2 {
 }
 
 impl TokenGeneratorTrait for TokenGenerator2 {
+    fn init(&mut self, prompt_tokens: Vec<u32>) -> Result<()> {
+        self.prompt_tokens = prompt_tokens;
+        self.next_token = Some(self.next_token().unwrap_or_default());
+        Ok(())
+    }
+
     fn next(&mut self) -> Result<TokenGeneratorResult> {
         if self.index >= self.parameter.max_new_tokens {
             return Ok(TokenGeneratorResult::Finish(FinishReason::Length));
@@ -171,12 +168,12 @@ mod tests {
     #[test]
     fn test_token_generator_finish() {
         let mut token_generator = TokenGenerator2::new(
-            vec![0, 1, 2],
             HashSet::new(),
             GenerateParameter { max_new_tokens: 10 },
             Box::new(DummyModelProcessor::new()),
             Box::new(DummySampler::new()),
         );
+        token_generator.init(vec![0, 1, 2]).unwrap();
         // starting at 1 because model processor and sampler run already in the new function.
         for index in 1..11 {
             assert_eq!(
@@ -194,12 +191,12 @@ mod tests {
     fn test_token_generator_eos_token() {
         let stop_token = 3;
         let mut token_generator = TokenGenerator2::new(
-            vec![0, 1, 2],
             vec![stop_token].into_iter().collect(),
             GenerateParameter { max_new_tokens: 10 },
             Box::new(DummyModelProcessor::new()),
             Box::new(DummySampler::new()),
         );
+        token_generator.init(vec![0, 1, 2]).unwrap();
         for index in 1..3 {
             assert_eq!(
                 token_generator.next().unwrap(),

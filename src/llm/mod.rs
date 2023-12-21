@@ -1,6 +1,4 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/mistral/main.rs
-
-pub mod dummy_text_generator;
 mod generate_parameter;
 pub mod model_processor;
 pub mod models;
@@ -10,8 +8,7 @@ pub mod text_generator;
 pub mod token_generator;
 pub mod token_output_stream;
 
-pub use dummy_text_generator::DummyTextGenerator;
-pub use text_generator::TextGenerator;
+pub use text_generator::TextGeneratorTrait;
 
 use std::path::PathBuf;
 
@@ -26,6 +23,13 @@ pub use text_generation::TextGeneration;
 use tokenizers::Tokenizer;
 
 use self::models::Models;
+
+#[derive(Debug, PartialEq)]
+pub enum FinishReason {
+    Length,
+    EosToken,
+    StopSequence,
+}
 
 fn format_size(size_in_bytes: usize) -> String {
     if size_in_bytes < 1_000 {
