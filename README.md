@@ -54,6 +54,15 @@ Visit http://localhost:8080/swagger-ui for the swagger ui.
 
 ["lmz/candle-mistral"](https://huggingface.co/lmz/candle-mistral)
 
+## Performance
+
+The following table shows the performance metrics of the model on different systems:
+
+| Model            | System                     | Tokens per Second |
+| ---------------- | -------------------------- | ----------------- |
+| 7b-open-chat-3.5 | AMD 7900X3D (12 Core) 64GB | 9.4 tokens/s      |
+| 7b-open-chat-3.5 | AMD 5600G (8 Core VM) 16GB | 2.85 tokens/s     |
+
 ## Todo
 
 - [x] implement api for https://huggingface.github.io/text-generation-inference/#/
