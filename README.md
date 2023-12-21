@@ -56,7 +56,7 @@ Visit http://localhost:8080/swagger-ui for the swagger ui.
 
 ## Todo
 
-- [ ] implement api for https://huggingface.github.io/text-generation-inference/#/
+- [x] implement api for https://huggingface.github.io/text-generation-inference/#/
 - [ ] model configuration
 - [ ] generate stream
 - [x] docker image and docker-compose

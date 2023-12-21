@@ -1,8 +1,5 @@
 use super::model::{ErrorResponse, GenerateRequest, GenerateResponse};
-use crate::{
-    config::Config,
-    llm::{create_text_generation, models::Models},
-};
+use crate::{config::Config, llm::create_text_generation};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
 /// Generate tokens
@@ -45,7 +42,7 @@ pub async fn generate_text_handler(
     };
 
     let generator = create_text_generation(
-        Models::Mistral7b,
+        config.model,
         temperature,
         top_p,
         repeat_penalty,

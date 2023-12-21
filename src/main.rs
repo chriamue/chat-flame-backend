@@ -29,8 +29,8 @@ struct Opt {
     sample_len: Option<usize>,
 
     /// Optional model to use for text generation. If not provided, defaults to 7b.
-    #[structopt(long, default_value = "7b-mistral")]
-    model: Models,
+    #[structopt(long)]
+    model: Option<Models>,
 }
 
 async fn generate_text(prompt: String, sample_len: Option<usize>, model: Models, config: Config) {
@@ -74,10 +74,16 @@ async fn main() {
         Ok(config) => {
             info!("Loaded config: {:?}", config);
             if let Some(prompt) = opt.prompt {
-                generate_text(prompt, opt.sample_len, opt.model, config).await;
+                generate_text(
+                    prompt,
+                    opt.sample_len,
+                    opt.model.unwrap_or_default(),
+                    config,
+                )
+                .await;
                 return;
             } else {
-                start_server(opt.model, config).await;
+                start_server(opt.model.unwrap_or(config.model), config).await;
             }
         }
         Err(e) => {

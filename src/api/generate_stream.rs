@@ -1,8 +1,5 @@
 use super::model::GenerateRequest;
-use crate::{
-    config::Config,
-    llm::{create_text_generation, models::Models},
-};
+use crate::{config::Config, llm::create_text_generation};
 use axum::{
     extract::State,
     response::{sse::Event, IntoResponse, Sse},
@@ -54,7 +51,7 @@ pub async fn generate_stream_handler(
     };
 
     let mut generator = create_text_generation(
-        Models::Mistral7b,
+        config.model,
         temperature,
         top_p,
         repeat_penalty,

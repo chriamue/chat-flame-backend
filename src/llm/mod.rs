@@ -18,7 +18,7 @@ use candle_core::Device;
 use candle_transformers::models::quantized_llama::ModelWeights;
 use hf_hub::api::sync::{Api, ApiBuilder};
 use hf_hub::{Repo, RepoType};
-use log::info;
+use log::{debug, info};
 pub use text_generation::TextGeneration;
 use tokenizers::Tokenizer;
 
@@ -58,6 +58,8 @@ pub fn create_model(
     };
 
     let model_path = model.repo_path();
+
+    debug!("model paths: {:?}", model_path);
 
     let repo = api.repo(Repo::with_revision(
         model_path.0.to_string(),

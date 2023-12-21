@@ -1,47 +1,62 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
+use serde::Deserialize;
+use std::str::FromStr;
 
-use clap::ValueEnum;
-
-#[derive(Clone, Debug, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Default, Deserialize, Clone, Debug, Copy, PartialEq, Eq)]
 pub enum Models {
-    #[value(name = "7b")]
+    #[serde(rename = "7b")]
     L7b,
-    #[value(name = "13b")]
+    #[serde(rename = "13b")]
     L13b,
-    #[value(name = "70b")]
+    #[serde(rename = "70b")]
     L70b,
-    #[value(name = "7b-chat")]
+    #[serde(rename = "7b-chat")]
     L7bChat,
-    #[value(name = "13b-chat")]
+    #[serde(rename = "13b-chat")]
     L13bChat,
-    #[value(name = "70b-chat")]
+    #[serde(rename = "70b-chat")]
     L70bChat,
-    #[value(name = "7b-code")]
+    #[serde(rename = "7b-code")]
     L7bCode,
-    #[value(name = "13b-code")]
+    #[serde(rename = "13b-code")]
     L13bCode,
-    #[value(name = "32b-code")]
+    #[serde(rename = "32b-code")]
     L34bCode,
-    #[value(name = "7b-leo")]
+    #[serde(rename = "7b-leo")]
     Leo7b,
-    #[value(name = "13b-leo")]
+    #[serde(rename = "13b-leo")]
     Leo13b,
-    #[value(name = "7b-mistral")]
+    #[default]
+    #[serde(rename = "7b-mistral")]
     Mistral7b,
-    #[value(name = "7b-mistral-instruct")]
+    #[serde(rename = "7b-mistral-instruct")]
     Mistral7bInstruct,
-    #[value(name = "7b-zephyr-a")]
+    #[serde(rename = "7b-zephyr-a")]
     Zephyr7bAlpha,
-    #[value(name = "7b-zephyr-b")]
+    #[serde(rename = "7b-zephyr-b")]
     Zephyr7bBeta,
-    #[value(name = "7b-open-chat-3.5")]
+    #[serde(rename = "7b-open-chat-3.5")]
     OpenChat35,
-    #[value(name = "7b-starling-a")]
+    #[serde(rename = "7b-starling-a")]
     Starling7bAlpha,
-    #[value(name = "mixtral")]
+    #[serde(rename = "mixtral")]
     Mixtral,
-    #[value(name = "mixtral-instruct")]
+    #[serde(rename = "mixtral-instruct")]
     MixtralInstruct,
+}
+
+#[derive(Deserialize)]
+struct StringEnumHelper {
+    model: Models,
+}
+
+impl FromStr for Models {
+    type Err = serde_yaml::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let helper: StringEnumHelper = serde_yaml::from_str(&format!("model: {}", s))?;
+        Ok(helper.model)
+    }
 }
 
 impl Models {
