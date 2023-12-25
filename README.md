@@ -60,9 +60,13 @@ python test.py
 ## Supported Models
 
 - [x] [Mistral](https://huggingface.co/mistralai/Mistral-7B-v0.1)
+- [x] Zephyr
+- [x] OpenChat
+- [x] Starling
 - [ ] GPT-Neo
 - [ ] GPT-J
 - [ ] Llama
+
 
 ### Mistral
 
@@ -81,6 +85,8 @@ The following table shows the performance metrics of the model on different syst
 ## Todo
 
 - [x] implement api for https://huggingface.github.io/text-generation-inference/#/
-- [ ] model configuration
-- [ ] generate stream
+- [x] model configuration
+- [x] generate stream
 - [x] docker image and docker-compose
+- [ ] add tests
+- [ ] add documentation
