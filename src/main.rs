@@ -1,6 +1,6 @@
 use chat_flame_backend::{
     config::{load_config, Config},
-    llm::models::Models,
+    llm::{generate_parameter::GenerateParameter, models::Models},
     server::server,
 };
 use clap::Parser;
@@ -28,12 +28,29 @@ struct Opt {
     #[structopt(short, long)]
     sample_len: Option<usize>,
 
+    /// The temperature used to generate samples, use 0 for greedy sampling.
+    #[arg(long, default_value_t = 0.8)]
+    temperature: f64,
+
+    /// Nucleus sampling probability cutoff.
+    #[arg(long)]
+    top_p: Option<f64>,
+
+    /// The seed to use when generating random samples.
+    #[arg(long, default_value_t = 299792458)]
+    seed: u64,
+
     /// Optional model to use for text generation. If not provided, defaults to 7b-open-chat-3.5.
     #[structopt(long)]
     model: Option<Models>,
 }
 
-async fn generate_text(prompt: String, sample_len: Option<usize>, model: Models, config: Config) {
+async fn generate_text(
+    prompt: String,
+    parameter: GenerateParameter,
+    model: Models,
+    config: Config,
+) {
     info!("Generating text for prompt: {}", prompt);
     let mut text_generation = chat_flame_backend::llm::create_text_generation(
         model,
@@ -44,9 +61,8 @@ async fn generate_text(prompt: String, sample_len: Option<usize>, model: Models,
         &config.cache_dir,
     )
     .unwrap();
-    let generated_text = text_generation
-        .run(&prompt, sample_len.unwrap_or(150))
-        .unwrap();
+
+    let generated_text = text_generation.run(&prompt, parameter).unwrap();
     println!("{}", generated_text.unwrap_or_default());
 }
 
@@ -74,13 +90,14 @@ async fn main() {
         Ok(config) => {
             info!("Loaded config: {:?}", config);
             if let Some(prompt) = opt.prompt {
-                generate_text(
-                    prompt,
-                    opt.sample_len,
-                    opt.model.unwrap_or_default(),
-                    config,
-                )
-                .await;
+                let parameter = GenerateParameter {
+                    temperature: opt.temperature,
+                    top_p: opt.top_p.unwrap_or_default(),
+                    max_new_tokens: opt.sample_len.unwrap_or(50),
+                    seed: opt.seed,
+                };
+
+                generate_text(prompt, parameter, opt.model.unwrap_or_default(), config).await;
                 return;
             } else {
                 start_server(opt.model.unwrap_or(config.model), config).await;

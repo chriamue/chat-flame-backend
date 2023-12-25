@@ -49,7 +49,7 @@ impl TextGeneration {
         }
     }
 
-    pub fn run(&mut self, prompt: &str, sample_len: usize) -> Result<Option<String>> {
+    pub fn run(&mut self, prompt: &str, parameter: GenerateParameter) -> Result<Option<String>> {
         let locked_tokenizer = self.tokenizer.try_lock().unwrap();
         let locked_model = self.model.try_lock().unwrap();
 
@@ -65,12 +65,12 @@ impl TextGeneration {
             })
             .collect::<HashSet<u32>>();
 
-        let parameter = GenerateParameter {
-            max_new_tokens: sample_len,
-        };
-
         let model = Box::new(locked_model.clone());
-        let sampler = Box::new(LogitsProcessor::new(42, None, None));
+        let sampler = Box::new(LogitsProcessor::new(
+            parameter.seed,
+            Some(parameter.temperature),
+            Some(parameter.top_p),
+        ));
 
         let token_generator: Box<dyn TokenGeneratorTrait> =
             Box::new(TokenGenerator2::new(eos_tokens, parameter, model, sampler));

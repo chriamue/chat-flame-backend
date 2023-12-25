@@ -50,8 +50,10 @@ mod tests {
 
     #[test]
     fn test_dummy_token_generator() {
-        let mut token_generator =
-            DummyTokenGenerator::new(GenerateParameter { max_new_tokens: 10 });
+        let mut token_generator = DummyTokenGenerator::new(GenerateParameter {
+            max_new_tokens: 10,
+            ..Default::default()
+        });
         for index in 0..10 {
             assert_eq!(
                 token_generator.next().unwrap(),

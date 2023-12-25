@@ -80,6 +80,7 @@ mod tests {
             )),
             Box::new(DummyTokenGenerator::new(GenerateParameter {
                 max_new_tokens: 10,
+                ..Default::default()
             })),
         );
         text_generator.init("Hello World".to_string()).unwrap();

@@ -1,7 +1,7 @@
 use crate::{
     api::model::{ErrorResponse, GenerateRequest, GenerateResponse},
     config::Config,
-    llm::create_text_generation,
+    llm::{create_text_generation, generate_parameter::GenerateParameter},
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
@@ -54,7 +54,14 @@ pub async fn generate_text_handler(
     );
     match generator {
         Ok(mut generator) => {
-            let generated_text = generator.run(&payload.inputs, sample_len);
+            let parameter = GenerateParameter {
+                temperature: temperature.unwrap_or_default(),
+                top_p: top_p.unwrap_or_default(),
+                max_new_tokens: sample_len,
+                seed: 42,
+            };
+
+            let generated_text = generator.run(&payload.inputs, parameter);
             match generated_text {
                 Ok(generated_text) => match generated_text {
                     Some(text) => Ok(Json(GenerateResponse {

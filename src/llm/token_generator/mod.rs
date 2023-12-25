@@ -169,7 +169,10 @@ mod tests {
     fn test_token_generator_finish() {
         let mut token_generator = TokenGenerator2::new(
             HashSet::new(),
-            GenerateParameter { max_new_tokens: 10 },
+            GenerateParameter {
+                max_new_tokens: 10,
+                ..Default::default()
+            },
             Box::new(DummyModelProcessor::new()),
             Box::new(DummySampler::new()),
         );
@@ -192,7 +195,10 @@ mod tests {
         let stop_token = 3;
         let mut token_generator = TokenGenerator2::new(
             vec![stop_token].into_iter().collect(),
-            GenerateParameter { max_new_tokens: 10 },
+            GenerateParameter {
+                max_new_tokens: 10,
+                ..Default::default()
+            },
             Box::new(DummyModelProcessor::new()),
             Box::new(DummySampler::new()),
         );

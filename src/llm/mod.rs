@@ -1,5 +1,5 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/mistral/main.rs
-mod generate_parameter;
+pub mod generate_parameter;
 pub mod model_processor;
 pub mod models;
 pub mod sampler;
