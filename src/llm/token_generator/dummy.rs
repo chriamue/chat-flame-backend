@@ -15,6 +15,8 @@ pub struct DummyTokenGenerator {
     model: Box<dyn ModelProcessor>,
 }
 
+unsafe impl Send for DummyTokenGenerator {}
+
 impl DummyTokenGenerator {
     pub fn new(parameter: GenerateParameter) -> Self {
         let sampler = Box::new(DummySampler::new());

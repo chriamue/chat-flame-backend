@@ -44,14 +44,7 @@ pub async fn generate_text_handler(
         None => 50,
     };
 
-    let generator = create_text_generation(
-        config.model,
-        temperature,
-        top_p,
-        repeat_penalty,
-        repeat_last_n,
-        &config.cache_dir,
-    );
+    let generator = create_text_generation(config.model, temperature, top_p, &config.cache_dir);
     match generator {
         Ok(mut generator) => {
             let parameter = GenerateParameter {

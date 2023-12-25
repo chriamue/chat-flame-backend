@@ -152,8 +152,6 @@ pub fn create_text_generation(
     model: Models,
     temperature: Option<f64>,
     top_p: Option<f64>,
-    repeat_penalty: f32,
-    repeat_last_n: usize,
     cache_dir: &Option<PathBuf>,
 ) -> Result<TextGeneration, Box<dyn std::error::Error>> {
     let tokenizer = create_tokenizer(model)?;
@@ -168,8 +166,6 @@ pub fn create_text_generation(
         seed,
         temperature,
         top_p,
-        repeat_penalty,
-        repeat_last_n,
         &device,
     ))
 }

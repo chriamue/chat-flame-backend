@@ -1,4 +1,5 @@
 use crate::api::model::GenerateRequest;
+use crate::llm::generate_parameter::GenerateParameter;
 use crate::{config::Config, llm::create_text_generation};
 use axum::{
     extract::State,
@@ -47,19 +48,22 @@ pub async fn generate_stream_handler(
 
     let stop_tokens = match &payload.parameters {
         Some(parameters) => parameters.stop.clone(),
-        None => vec!["</s>".to_string()],
+        None => vec!["<|endoftext|>".to_string(), "</s>".to_string()],
     };
 
-    let mut generator = create_text_generation(
-        config.model,
-        temperature,
-        top_p,
+    let mut generator =
+        create_text_generation(config.model, temperature, top_p, &config.cache_dir).unwrap();
+
+    let parameter = GenerateParameter {
+        temperature: temperature.unwrap_or_default(),
+        top_p: top_p.unwrap_or_default(),
+        max_new_tokens: sample_len,
+        seed: 42,
         repeat_penalty,
         repeat_last_n,
-        &config.cache_dir,
-    )
-    .unwrap();
-    let stream = generator.run_stream(&payload.inputs, sample_len, Some(stop_tokens));
+    };
+
+    let stream = generator.run_stream(&payload.inputs, parameter, Some(stop_tokens));
 
     let event_stream = stream.map(|response| -> Result<Event, std::convert::Infallible> {
         let data = serde_json::to_string(&response)

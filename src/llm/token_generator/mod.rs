@@ -81,7 +81,7 @@ pub enum TokenGeneratorResult {
     Finish(FinishReason),
 }
 
-pub trait TokenGeneratorTrait {
+pub trait TokenGeneratorTrait: Send {
     fn init(&mut self, prompt_tokens: Vec<u32>) -> Result<()>;
     fn next(&mut self) -> Result<TokenGeneratorResult>;
 }
@@ -96,6 +96,8 @@ pub struct TokenGenerator2 {
     next_token: Option<u32>,
     all_tokens: Vec<u32>,
 }
+
+unsafe impl Send for TokenGenerator2 {}
 
 impl TokenGenerator2 {
     pub fn new(

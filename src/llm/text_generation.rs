@@ -1,14 +1,14 @@
 use crate::{
     api::model::{FinishReason, StreamDetails, StreamResponse, Token},
-    llm::token_generator::TokenGenerator,
+    llm::{self, text_generator::TextGeneratorResult},
 };
 
 use crate::llm::generate_parameter::GenerateParameter;
-use anyhow::{Error as E, Result};
+use anyhow::Result;
 use candle_core::Device;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
-use log::{debug, info, trace};
+use log::{info, trace};
 use std::{collections::HashSet, sync::Arc};
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
@@ -24,8 +24,6 @@ use super::{
 pub struct TextGeneration {
     model: Arc<Mutex<ModelWeights>>,
     tokenizer: Arc<Mutex<TokenOutputStream>>,
-    repeat_penalty: f32,
-    repeat_last_n: usize,
 }
 
 impl TextGeneration {
@@ -36,16 +34,12 @@ impl TextGeneration {
         seed: u64,
         temp: Option<f64>,
         top_p: Option<f64>,
-        repeat_penalty: f32,
-        repeat_last_n: usize,
         _device: &Device,
     ) -> Self {
         let _logits_processor = LogitsProcessor::new(seed, temp, top_p);
         Self {
             model: Arc::new(Mutex::new(model)),
             tokenizer: Arc::new(Mutex::new(TokenOutputStream::new(tokenizer))),
-            repeat_penalty,
-            repeat_last_n,
         }
     }
 
@@ -115,118 +109,131 @@ impl TextGeneration {
     pub fn run_stream(
         &mut self,
         prompt: &str,
-        sample_len: usize,
-        stop_tokens: Option<Vec<String>>,
+        parameter: GenerateParameter,
+        _stop_tokens: Option<Vec<String>>,
     ) -> impl Stream<Item = StreamResponse> {
-        debug!("Running stream for {}: {}", sample_len, prompt);
+        info!(
+            "temp: {:.2} repeat-penalty: {:.2} repeat-last-n: {}",
+            parameter.temperature, parameter.repeat_penalty, parameter.repeat_last_n
+        );
+
+        let locked_tokenizer = self.tokenizer.try_lock().unwrap();
+        let locked_model = self.model.try_lock().unwrap();
+
+        let stop_tokens = vec!["<|endoftext|>", "</s>"];
+
+        let eos_tokens: HashSet<u32> = stop_tokens
+            .into_iter()
+            .map(|token| {
+                locked_tokenizer
+                    .tokenizer()
+                    .token_to_id(token)
+                    .unwrap_or_default()
+            })
+            .collect::<HashSet<u32>>();
+
+        let model = Box::new(locked_model.clone());
+        let sampler = Box::new(LogitsProcessor::new(
+            parameter.seed,
+            Some(parameter.temperature),
+            Some(parameter.top_p),
+        ));
+
         let (tx, rx) = tokio::sync::mpsc::channel(32);
 
-        let tokenizer = self.tokenizer.clone();
-        let model = self.model.clone();
         let prompt = prompt.to_string();
-        let sample_len = sample_len as usize;
-        let repeat_last_n = self.repeat_last_n;
-        let repeat_penalty = self.repeat_penalty;
+        let parameter = parameter.clone();
+
+        let tokenizer = locked_tokenizer.tokenizer().clone();
 
         tokio::spawn(async move {
-            let mut tokenizer = tokenizer.try_lock().unwrap();
-            let mut model = model.try_lock().unwrap();
-            tokenizer.clear();
-            let mut tokens = tokenizer
-                .tokenizer()
-                .encode(prompt, true)
-                .map_err(E::msg)
-                .unwrap()
-                .get_ids()
-                .to_vec();
+            let token_generator: Box<dyn TokenGeneratorTrait> = Box::new(TokenGenerator2::new(
+                eos_tokens,
+                parameter.clone(),
+                model,
+                sampler,
+            ));
 
-            let mut generated_text = String::new();
-            let mut logits_processor = LogitsProcessor::new(42, None, None);
+            let mut text_generator =
+                TextGenerator::new(TokenOutputStream::new(tokenizer), token_generator);
+
+            text_generator.init(prompt.to_string()).unwrap();
+
             let start_gen = std::time::Instant::now();
+            let mut token_count = 0;
+            let mut generated_text = String::new();
 
-            let mut token_generator = TokenGenerator::new();
-            token_generator.set_stop_tokens(stop_tokens, &mut tokenizer);
-
-            let mut generated_tokens = 0;
-
-            for index in 0..sample_len {
-                let next_token = token_generator
-                    .next(
-                        &tokens,
-                        &mut logits_processor,
-                        &mut model,
-                        repeat_penalty,
-                        repeat_last_n,
-                    )
-                    .unwrap()
-                    .unwrap();
-                tokens.push(next_token);
-                generated_tokens += 1;
-
-                if let Some(t) = tokenizer.next_token(next_token).unwrap() {
-                    if token_generator.is_stop_token(&next_token) {
-                        tx.send(StreamResponse {
-                            generated_text: Some(generated_text.clone()),
-                            details: Some(StreamDetails {
-                                finish_reason: FinishReason::EosToken,
-                                generated_tokens: index as i32,
-                                seed: None,
-                            }),
-                            token: Token {
-                                text: t.clone(),
-                                logprob: Some(1.0),
-                                special: true,
-                                id: index as i32,
-                            },
-                            top_tokens: None,
-                        })
-                        .await
-                        .unwrap();
-                        let dt = start_gen.elapsed();
-                        info!(
-                            "\n{generated_tokens} tokens generated ({:.2} token/s)",
-                            generated_tokens as f64 / dt.as_secs_f64(),
-                        );
-                        return;
+            for index in 0..parameter.max_new_tokens {
+                if let Ok(t) = text_generator.next() {
+                    match t {
+                        TextGeneratorResult::Token((text, _)) => {
+                            token_count += 1;
+                            generated_text.push_str(&text);
+                            trace!("{text}");
+                            tx.send(StreamResponse {
+                                generated_text: None,
+                                details: None,
+                                token: Token {
+                                    text: text.clone(),
+                                    logprob: Some(1.0),
+                                    special: false,
+                                    id: index as i32,
+                                },
+                                top_tokens: None,
+                            })
+                            .await
+                            .unwrap();
+                        }
+                        TextGeneratorResult::Finish(reason) => {
+                            match reason {
+                                llm::FinishReason::Length => {
+                                    tx.send(StreamResponse {
+                                        generated_text: Some(generated_text.clone()),
+                                        details: Some(StreamDetails {
+                                            finish_reason: FinishReason::Length,
+                                            generated_tokens: index as i32,
+                                            seed: Some(parameter.seed as i64),
+                                        }),
+                                        token: Token {
+                                            text: "".to_string(),
+                                            logprob: Some(1.0),
+                                            special: true,
+                                            id: index as i32,
+                                        },
+                                        top_tokens: None,
+                                    })
+                                    .await
+                                    .unwrap();
+                                }
+                                _ => {
+                                    tx.send(StreamResponse {
+                                        generated_text: Some(generated_text.clone()),
+                                        details: Some(StreamDetails {
+                                            finish_reason: FinishReason::EosToken,
+                                            generated_tokens: index as i32,
+                                            seed: Some(parameter.seed as i64),
+                                        }),
+                                        token: Token {
+                                            text: "".to_string(),
+                                            logprob: Some(1.0),
+                                            special: true,
+                                            id: index as i32,
+                                        },
+                                        top_tokens: None,
+                                    })
+                                    .await
+                                    .unwrap();
+                                }
+                            }
+                            break;
+                        }
                     }
-                    generated_text.push_str(&t);
-                    trace!("{t}");
-                    tx.send(StreamResponse {
-                        generated_text: None,
-                        details: None,
-                        token: Token {
-                            text: t.clone(),
-                            logprob: Some(1.0),
-                            special: false,
-                            id: index as i32,
-                        },
-                        top_tokens: None,
-                    })
-                    .await
-                    .unwrap();
                 }
-                tx.send(StreamResponse {
-                    generated_text: Some(generated_text.clone()),
-                    details: Some(StreamDetails {
-                        finish_reason: FinishReason::Length,
-                        generated_tokens: sample_len as i32,
-                        seed: None,
-                    }),
-                    token: Token {
-                        text: "".to_string(),
-                        logprob: Some(1.0),
-                        special: true,
-                        id: sample_len as i32,
-                    },
-                    top_tokens: None,
-                })
-                .await
-                .unwrap();
             }
             let dt = start_gen.elapsed();
             info!(
-                "\n{generated_tokens} tokens generated ({:.2} token/s)",
-                generated_tokens as f64 / dt.as_secs_f64(),
+                "\n{token_count} tokens generated ({:.2} token/s)",
+                token_count as f64 / dt.as_secs_f64(),
             );
         });
 
