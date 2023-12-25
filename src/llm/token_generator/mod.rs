@@ -1,77 +1,14 @@
 use std::collections::HashSet;
 
 use anyhow::Result;
-use candle_core::{DType, Device, Tensor};
-use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
+use candle_core::{Device, Tensor};
 
 use super::{
     generate_parameter::GenerateParameter, model_processor::ModelProcessor, sampler::Sampler,
-    token_output_stream::TokenOutputStream, FinishReason,
+    FinishReason,
 };
 
 pub mod dummy;
-
-#[derive(Default)]
-pub struct TokenGenerator {
-    index: usize,
-    stop_tokens: HashSet<u32>,
-}
-
-impl TokenGenerator {
-    pub fn new() -> Self {
-        Self {
-            index: 0,
-            stop_tokens: HashSet::new(),
-        }
-    }
-
-    pub fn next(
-        &mut self,
-        tokens: &[u32],
-        logits_processor: &mut LogitsProcessor,
-        model: &mut ModelWeights,
-        repeat_penalty: f32,
-        repeat_last_n: usize,
-    ) -> Result<Option<u32>> {
-        let context_size = if self.index > 0 { 1 } else { tokens.len() };
-        let start_pos = tokens.len().saturating_sub(context_size);
-        let ctxt = &tokens[start_pos..];
-        let input = Tensor::new(ctxt, &Device::Cpu)?.unsqueeze(0)?;
-        let logits = model.forward(&input, start_pos)?;
-        let logits = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
-        let logits = {
-            let start_at = tokens.len().saturating_sub(repeat_last_n);
-            candle_transformers::utils::apply_repeat_penalty(
-                &logits,
-                repeat_penalty,
-                &tokens[start_at..],
-            )?
-        };
-        self.index += 1;
-        Ok(Some(logits_processor.sample(&logits)?))
-    }
-
-    pub fn reset(&mut self) {
-        self.index = 0;
-        self.stop_tokens.clear();
-    }
-
-    pub fn set_stop_tokens(
-        &mut self,
-        stop_tokens: Option<Vec<String>>,
-        tokenizer: &mut TokenOutputStream,
-    ) {
-        self.stop_tokens = stop_tokens
-            .unwrap_or_default()
-            .iter()
-            .filter_map(|token| tokenizer.get_token(token))
-            .collect();
-    }
-
-    pub fn is_stop_token(&self, token: &u32) -> bool {
-        self.stop_tokens.contains(token)
-    }
-}
 
 pub type TokenProbability = (u32, f32);
 
@@ -86,7 +23,7 @@ pub trait TokenGeneratorTrait: Send {
     fn next(&mut self) -> Result<TokenGeneratorResult>;
 }
 
-pub struct TokenGenerator2 {
+pub struct TokenGenerator {
     index: usize,
     stop_tokens: HashSet<u32>,
     parameter: GenerateParameter,
@@ -97,9 +34,9 @@ pub struct TokenGenerator2 {
     all_tokens: Vec<u32>,
 }
 
-unsafe impl Send for TokenGenerator2 {}
+unsafe impl Send for TokenGenerator {}
 
-impl TokenGenerator2 {
+impl TokenGenerator {
     pub fn new(
         stop_tokens: HashSet<u32>,
         parameter: GenerateParameter,
@@ -142,7 +79,7 @@ impl TokenGenerator2 {
             .len()
             .saturating_sub(self.parameter.repeat_last_n);
         let logits = candle_transformers::utils::apply_repeat_penalty(
-            &logits,
+            logits,
             self.parameter.repeat_penalty,
             &self.all_tokens[start_at..],
         )?;
@@ -150,7 +87,7 @@ impl TokenGenerator2 {
     }
 }
 
-impl TokenGeneratorTrait for TokenGenerator2 {
+impl TokenGeneratorTrait for TokenGenerator {
     fn init(&mut self, prompt_tokens: Vec<u32>) -> Result<()> {
         self.prompt_tokens = prompt_tokens.clone();
         self.all_tokens = prompt_tokens.clone();
@@ -187,7 +124,7 @@ mod tests {
 
     #[test]
     fn test_token_generator_finish() {
-        let mut token_generator = TokenGenerator2::new(
+        let mut token_generator = TokenGenerator::new(
             HashSet::new(),
             GenerateParameter {
                 max_new_tokens: 10,
@@ -214,7 +151,7 @@ mod tests {
     #[test]
     fn test_token_generator_eos_token() {
         let stop_token = 3;
-        let mut token_generator = TokenGenerator2::new(
+        let mut token_generator = TokenGenerator::new(
             vec![stop_token].into_iter().collect(),
             GenerateParameter {
                 max_new_tokens: 10,

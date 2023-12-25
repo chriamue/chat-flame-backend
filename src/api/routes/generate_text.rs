@@ -44,7 +44,7 @@ pub async fn generate_text_handler(
         None => 50,
     };
 
-    let generator = create_text_generation(config.model, temperature, top_p, &config.cache_dir);
+    let generator = create_text_generation(config.model, &config.cache_dir);
     match generator {
         Ok(mut generator) => {
             let parameter = GenerateParameter {

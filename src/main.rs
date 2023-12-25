@@ -61,8 +61,7 @@ async fn generate_text(
 ) {
     info!("Generating text for prompt: {}", prompt);
     let mut text_generation =
-        chat_flame_backend::llm::create_text_generation(model, None, None, &config.cache_dir)
-            .unwrap();
+        chat_flame_backend::llm::create_text_generation(model, &config.cache_dir).unwrap();
 
     let generated_text = text_generation.run(&prompt, parameter).unwrap();
     println!("{}", generated_text.unwrap_or_default());

@@ -75,7 +75,7 @@ pub fn create_model(
     ));
 
     let model_path = &repo.get(model_path.1)?;
-    let mut file = std::fs::File::open(&model_path)?;
+    let mut file = std::fs::File::open(model_path)?;
     info!("retrieved the model files in {:?}", start.elapsed());
 
     let model = match model_path.extension().and_then(|v| v.to_str()) {
@@ -150,22 +150,12 @@ pub fn create_tokenizer(model: Models) -> Result<Tokenizer, Box<dyn std::error::
 
 pub fn create_text_generation(
     model: Models,
-    temperature: Option<f64>,
-    top_p: Option<f64>,
     cache_dir: &Option<PathBuf>,
 ) -> Result<TextGeneration, Box<dyn std::error::Error>> {
     let tokenizer = create_tokenizer(model)?;
     let model = create_model(model, cache_dir)?;
 
     let device = Device::Cpu;
-    let seed: u64 = 299792458;
 
-    Ok(TextGeneration::new(
-        model.0,
-        tokenizer,
-        seed,
-        temperature,
-        top_p,
-        &device,
-    ))
+    Ok(TextGeneration::new(model.0, tokenizer, &device))
 }

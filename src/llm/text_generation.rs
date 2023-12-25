@@ -16,7 +16,7 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use super::{
     text_generator::{self, TextGenerator},
-    token_generator::{TokenGenerator2, TokenGeneratorTrait},
+    token_generator::{TokenGenerator, TokenGeneratorTrait},
     token_output_stream::TokenOutputStream,
     TextGeneratorTrait,
 };
@@ -28,15 +28,7 @@ pub struct TextGeneration {
 
 impl TextGeneration {
     #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        model: ModelWeights,
-        tokenizer: Tokenizer,
-        seed: u64,
-        temp: Option<f64>,
-        top_p: Option<f64>,
-        _device: &Device,
-    ) -> Self {
-        let _logits_processor = LogitsProcessor::new(seed, temp, top_p);
+    pub fn new(model: ModelWeights, tokenizer: Tokenizer, _device: &Device) -> Self {
         Self {
             model: Arc::new(Mutex::new(model)),
             tokenizer: Arc::new(Mutex::new(TokenOutputStream::new(tokenizer))),
@@ -72,7 +64,7 @@ impl TextGeneration {
         ));
 
         let token_generator: Box<dyn TokenGeneratorTrait> =
-            Box::new(TokenGenerator2::new(eos_tokens, parameter, model, sampler));
+            Box::new(TokenGenerator::new(eos_tokens, parameter, model, sampler));
 
         let mut text_generator = TextGenerator::new(
             TokenOutputStream::new(locked_tokenizer.tokenizer().clone()),
@@ -147,7 +139,7 @@ impl TextGeneration {
         let tokenizer = locked_tokenizer.tokenizer().clone();
 
         tokio::spawn(async move {
-            let token_generator: Box<dyn TokenGeneratorTrait> = Box::new(TokenGenerator2::new(
+            let token_generator: Box<dyn TokenGeneratorTrait> = Box::new(TokenGenerator::new(
                 eos_tokens,
                 parameter.clone(),
                 model,

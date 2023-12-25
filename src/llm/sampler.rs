@@ -21,6 +21,12 @@ impl DummySampler {
     }
 }
 
+impl Default for DummySampler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Sampler for DummySampler {
     fn sample(&mut self, _logits: &Tensor) -> Result<u32> {
         self.index += 1;

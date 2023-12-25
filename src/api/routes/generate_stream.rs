@@ -51,8 +51,7 @@ pub async fn generate_stream_handler(
         None => vec!["<|endoftext|>".to_string(), "</s>".to_string()],
     };
 
-    let mut generator =
-        create_text_generation(config.model, temperature, top_p, &config.cache_dir).unwrap();
+    let mut generator = create_text_generation(config.model, &config.cache_dir).unwrap();
 
     let parameter = GenerateParameter {
         temperature: temperature.unwrap_or_default(),

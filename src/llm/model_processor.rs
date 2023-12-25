@@ -21,10 +21,16 @@ impl DummyModelProcessor {
     }
 }
 
+impl Default for DummyModelProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModelProcessor for DummyModelProcessor {
     fn forward(&mut self, x: &Tensor, _index_pos: usize) -> Result<Tensor> {
         self.index += 1;
-        let y = Tensor::new(&[self.index as f32 - 1.0], &x.device())?;
+        let y = Tensor::new(&[self.index as f32 - 1.0], x.device())?;
         Ok(y)
     }
 }
