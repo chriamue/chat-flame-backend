@@ -1,0 +1,33 @@
+name: Rust Docs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_docs:
+    name: Build and Deploy Rust Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build Documentation
+        run: cargo doc --all-features --no-deps
+
+      - name: Deploy Documentation to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./target/doc
+          keep_files: true
