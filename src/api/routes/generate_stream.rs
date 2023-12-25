@@ -1,6 +1,6 @@
-use crate::api::model::GenerateRequest;
 use crate::llm::generate_parameter::GenerateParameter;
-use crate::{config::Config, llm::create_text_generation};
+use crate::llm::text_generation::create_text_generation;
+use crate::{api::model::GenerateRequest, config::Config};
 use axum::{
     extract::State,
     response::{sse::Event, IntoResponse, Sse},

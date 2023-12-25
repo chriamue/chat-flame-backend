@@ -1,6 +1,9 @@
 use crate::{
     api::model::{FinishReason, StreamDetails, StreamResponse, Token},
-    llm::{self, text_generator::TextGeneratorResult},
+    llm::{
+        self,
+        text_generator::{TextGeneratorResult, TextGeneratorTrait},
+    },
 };
 
 use crate::llm::generate_parameter::GenerateParameter;
@@ -10,15 +13,16 @@ use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
 use log::{info, trace};
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, path::PathBuf, sync::Arc};
 use tokenizers::Tokenizer;
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::ReceiverStream;
 
 use super::{
+    loader::{create_model, create_tokenizer},
+    models::Models,
     text_generator::{self, TextGenerator},
     token_generator::{TokenGenerator, TokenGeneratorTrait},
-    TextGeneratorTrait,
 };
 
 pub struct TextGeneration {
@@ -231,4 +235,16 @@ impl TextGeneration {
 
         ReceiverStream::new(rx)
     }
+}
+
+pub fn create_text_generation(
+    model: Models,
+    cache_dir: &Option<PathBuf>,
+) -> Result<TextGeneration, Box<dyn std::error::Error>> {
+    let tokenizer = create_tokenizer(model)?;
+    let model = create_model(model, cache_dir)?;
+
+    let device = Device::Cpu;
+
+    Ok(TextGeneration::new(model.0, tokenizer, &device))
 }

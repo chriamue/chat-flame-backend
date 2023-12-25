@@ -1,7 +1,7 @@
 use crate::{
     api::model::{ErrorResponse, GenerateRequest, GenerateResponse},
     config::Config,
-    llm::{create_text_generation, generate_parameter::GenerateParameter},
+    llm::{generate_parameter::GenerateParameter, text_generation::create_text_generation},
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 

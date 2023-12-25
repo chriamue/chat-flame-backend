@@ -1,6 +1,9 @@
 use chat_flame_backend::{
     config::{load_config, Config},
-    llm::{generate_parameter::GenerateParameter, models::Models},
+    llm::{
+        generate_parameter::GenerateParameter, loader::create_model, models::Models,
+        text_generation::create_text_generation,
+    },
     server::server,
 };
 use clap::Parser;
@@ -60,8 +63,7 @@ async fn generate_text(
     config: Config,
 ) {
     info!("Generating text for prompt: {}", prompt);
-    let mut text_generation =
-        chat_flame_backend::llm::create_text_generation(model, &config.cache_dir).unwrap();
+    let mut text_generation = create_text_generation(model, &config.cache_dir).unwrap();
 
     let generated_text = text_generation.run(&prompt, parameter).unwrap();
     println!("{}", generated_text.unwrap_or_default());
@@ -70,7 +72,7 @@ async fn generate_text(
 async fn start_server(model: Models, config: Config) {
     info!("Starting server");
     info!("preload model");
-    let _ = chat_flame_backend::llm::create_model(model, &config.cache_dir);
+    let _ = create_model(model, &config.cache_dir);
 
     info!("Running on port: {}", config.port);
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
