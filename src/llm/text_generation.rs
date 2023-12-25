@@ -6,6 +6,7 @@ use crate::{
 use crate::llm::generate_parameter::GenerateParameter;
 use anyhow::Result;
 use candle_core::Device;
+use candle_examples::token_output_stream::TokenOutputStream;
 use candle_transformers::{generation::LogitsProcessor, models::quantized_llama::ModelWeights};
 use futures::Stream;
 use log::{info, trace};
@@ -17,7 +18,6 @@ use tokio_stream::wrappers::ReceiverStream;
 use super::{
     text_generator::{self, TextGenerator},
     token_generator::{TokenGenerator, TokenGeneratorTrait},
-    token_output_stream::TokenOutputStream,
     TextGeneratorTrait,
 };
 

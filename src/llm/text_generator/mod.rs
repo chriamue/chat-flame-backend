@@ -1,9 +1,9 @@
 use super::{
     token_generator::{TokenGeneratorResult, TokenGeneratorTrait},
-    token_output_stream::TokenOutputStream,
     FinishReason,
 };
 use anyhow::Result;
+use candle_examples::token_output_stream::TokenOutputStream;
 mod dummy_text_generator;
 
 pub type TextProbability = (String, f32);

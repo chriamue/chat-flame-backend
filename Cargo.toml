@@ -17,6 +17,7 @@ path = "src/main.rs"
 anyhow = "1.0"
 axum = "0.7"
 candle-core = "0.3.2"
+candle-examples = "0.3.2"
 candle-transformers = "0.3.2"
 clap = { version = "4.4", features = ["derive"] }
 futures = "0.3.29"

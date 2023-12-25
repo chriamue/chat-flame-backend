@@ -6,7 +6,6 @@ pub mod sampler;
 mod text_generation;
 pub mod text_generator;
 pub mod token_generator;
-pub mod token_output_stream;
 
 pub use text_generator::TextGeneratorTrait;
 
