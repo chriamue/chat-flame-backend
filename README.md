@@ -1,4 +1,8 @@
 # chat-flame-backend
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Doc](https://img.shields.io/badge/Docs-online-green.svg)](https://blog.chriamue.de/chat-flame-backend/chat_flame_backend/)
+
 ChatFlameBackend is an innovative backend solution for chat applications, leveraging the power of the Candle AI framework with a focus on the Mistral model
 
 ## Quickstart
