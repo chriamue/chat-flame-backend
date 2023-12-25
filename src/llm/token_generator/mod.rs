@@ -94,6 +94,7 @@ pub struct TokenGenerator2 {
     sampler: Box<dyn Sampler>,
     model: Box<dyn ModelProcessor>,
     next_token: Option<u32>,
+    all_tokens: Vec<u32>,
 }
 
 impl TokenGenerator2 {
@@ -111,26 +112,51 @@ impl TokenGenerator2 {
             model,
             sampler,
             next_token: None,
+            all_tokens: Vec::new(),
         }
     }
-}
 
-impl TokenGenerator2 {
-    fn next_token(&mut self) -> Result<u32> {
+    fn next_token(&mut self, input: &[u32]) -> Result<u32> {
         let next_token = {
-            let input = Tensor::new(self.prompt_tokens.as_slice(), &Device::Cpu)?.unsqueeze(0)?;
-            let logits = self.model.forward(&input, 0)?;
+            let input = Tensor::new(input, &Device::Cpu)?.unsqueeze(0)?;
+            let logits = self
+                .model
+                .forward(&input, self.prompt_tokens.len() + self.index)?;
             let logits = logits.squeeze(0)?;
-            self.sampler.sample(&logits)?
+
+            let adjusted_logits = if self.parameter.repeat_penalty != 1.0 {
+                self.apply_repeat_penalty(&logits)?
+            } else {
+                logits
+            };
+            self.sampler.sample(&adjusted_logits)?
         };
         Ok(next_token)
+    }
+
+    fn apply_repeat_penalty(&self, logits: &Tensor) -> Result<Tensor> {
+        let start_at = self
+            .all_tokens
+            .len()
+            .saturating_sub(self.parameter.repeat_last_n);
+        let logits = candle_transformers::utils::apply_repeat_penalty(
+            &logits,
+            self.parameter.repeat_penalty,
+            &self.all_tokens[start_at..],
+        )?;
+        Ok(logits.clone())
     }
 }
 
 impl TokenGeneratorTrait for TokenGenerator2 {
     fn init(&mut self, prompt_tokens: Vec<u32>) -> Result<()> {
-        self.prompt_tokens = prompt_tokens;
-        self.next_token = Some(self.next_token().unwrap_or_default());
+        self.prompt_tokens = prompt_tokens.clone();
+        self.all_tokens = prompt_tokens.clone();
+
+        self.next_token = Some(
+            self.next_token(prompt_tokens.as_slice())
+                .unwrap_or_default(),
+        );
         Ok(())
     }
 
@@ -139,21 +165,13 @@ impl TokenGeneratorTrait for TokenGenerator2 {
             return Ok(TokenGeneratorResult::Finish(FinishReason::Length));
         }
 
-        let next_token = {
-            let input = Tensor::new(&[self.next_token.unwrap()], &Device::Cpu)?.unsqueeze(0)?;
-            let logits = self
-                .model
-                .forward(&input, self.prompt_tokens.len() + self.index)?;
-            let logits = logits.squeeze(0)?;
-            self.sampler.sample(&logits)?
-        };
-
-        // todo: repeat penalty
+        let next_token = self.next_token(&[self.next_token.unwrap_or_default()])?;
 
         if self.stop_tokens.contains(&next_token) {
             return Ok(TokenGeneratorResult::Finish(FinishReason::EosToken));
         }
         self.next_token = Some(next_token);
+        self.all_tokens.push(next_token);
         self.index += 1;
         Ok(TokenGeneratorResult::Token((next_token, 1.0)))
     }
@@ -171,6 +189,7 @@ mod tests {
             HashSet::new(),
             GenerateParameter {
                 max_new_tokens: 10,
+                repeat_penalty: 1.0,
                 ..Default::default()
             },
             Box::new(DummyModelProcessor::new()),
@@ -197,6 +216,7 @@ mod tests {
             vec![stop_token].into_iter().collect(),
             GenerateParameter {
                 max_new_tokens: 10,
+                repeat_penalty: 1.0,
                 ..Default::default()
             },
             Box::new(DummyModelProcessor::new()),

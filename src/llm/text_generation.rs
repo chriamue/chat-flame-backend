@@ -50,6 +50,11 @@ impl TextGeneration {
     }
 
     pub fn run(&mut self, prompt: &str, parameter: GenerateParameter) -> Result<Option<String>> {
+        info!(
+            "temp: {:.2} repeat-penalty: {:.2} repeat-last-n: {}",
+            parameter.temperature, parameter.repeat_penalty, parameter.repeat_last_n
+        );
+
         let locked_tokenizer = self.tokenizer.try_lock().unwrap();
         let locked_model = self.model.try_lock().unwrap();
 

@@ -40,6 +40,14 @@ struct Opt {
     #[arg(long, default_value_t = 299792458)]
     seed: u64,
 
+    /// Penalty to be applied for repeating tokens, 1. means no penalty.
+    #[arg(long, default_value_t = 1.1)]
+    repeat_penalty: f32,
+
+    /// The context size to consider for the repeat penalty.
+    #[arg(long, default_value_t = 64)]
+    repeat_last_n: usize,
+
     /// Optional model to use for text generation. If not provided, defaults to 7b-open-chat-3.5.
     #[structopt(long)]
     model: Option<Models>,
@@ -95,6 +103,8 @@ async fn main() {
                     top_p: opt.top_p.unwrap_or_default(),
                     max_new_tokens: opt.sample_len.unwrap_or(50),
                     seed: opt.seed,
+                    repeat_penalty: opt.repeat_penalty,
+                    repeat_last_n: opt.repeat_last_n,
                 };
 
                 generate_text(prompt, parameter, opt.model.unwrap_or_default(), config).await;

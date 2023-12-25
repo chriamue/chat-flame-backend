@@ -9,4 +9,8 @@ pub struct GenerateParameter {
     pub temperature: f64,
     /// Nucleus sampling probability cutoff
     pub top_p: f64,
+    /// Penalty to be applied for repeating tokens, 1. means no penalty
+    pub repeat_penalty: f32,
+    /// The context size to consider for the repeat penalty
+    pub repeat_last_n: usize,
 }

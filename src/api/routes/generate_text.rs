@@ -59,6 +59,8 @@ pub async fn generate_text_handler(
                 top_p: top_p.unwrap_or_default(),
                 max_new_tokens: sample_len,
                 seed: 42,
+                repeat_penalty,
+                repeat_last_n,
             };
 
             let generated_text = generator.run(&payload.inputs, parameter);
