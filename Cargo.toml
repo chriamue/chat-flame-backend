@@ -16,11 +16,11 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0"
 axum = "0.7"
-candle-core = "0.3.1"
-candle-transformers = "0.3.1"
+candle-core = "0.3.2"
+candle-transformers = "0.3.2"
 clap = { version = "4.4", features = ["derive"] }
 futures = "0.3.29"
-hf-hub = { version = "0.3.1", features = ["tokio"] }
+hf-hub = { version = "0.3.2", features = ["tokio"] }
 log = "0.4"
 rayon = "1.8.0"
 pretty_env_logger = "0.5"
