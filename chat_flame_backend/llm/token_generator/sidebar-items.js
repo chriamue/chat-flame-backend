@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TokenGeneratorResult"],"mod":["dummy"],"struct":["TokenGenerator"],"trait":["TokenGeneratorTrait"],"type":["TokenProbability"]};

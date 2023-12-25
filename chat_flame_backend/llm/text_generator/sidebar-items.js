@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TextGeneratorResult"],"struct":["TextGenerator"],"trait":["TextGeneratorTrait"],"type":["TextProbability"]};

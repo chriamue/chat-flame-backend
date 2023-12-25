@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FinishReason"],"struct":["BestOfSequence","CompatGenerateRequest","Details","ErrorResponse","GenerateParameters","GenerateRequest","GenerateResponse","Info","PrefillToken","StreamDetails","StreamResponse","Token"]};

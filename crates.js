@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["chat_flame_backend"];
