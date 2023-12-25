@@ -87,7 +87,7 @@ pub fn create_model(
                 total_size_in_bytes +=
                     elem_count * tensor.ggml_dtype.type_size() / tensor.ggml_dtype.blck_size();
             }
-            println!(
+            debug!(
                 "loaded {:?} tensors ({}) in {:.2}s",
                 model.tensor_infos.len(),
                 &format_size(total_size_in_bytes),
@@ -103,13 +103,13 @@ pub fn create_model(
                 total_size_in_bytes +=
                     elem_count * tensor.dtype().type_size() / tensor.dtype().blck_size();
             }
-            println!(
+            debug!(
                 "loaded {:?} tensors ({}) in {:.2}s",
                 content.tensors.len(),
                 &format_size(total_size_in_bytes),
                 start.elapsed().as_secs_f32(),
             );
-            println!("params: {:?}", content.hparams);
+            debug!("params: {:?}", content.hparams);
             let default_gqa = match model {
                 Models::L7b
                 | Models::L13b
