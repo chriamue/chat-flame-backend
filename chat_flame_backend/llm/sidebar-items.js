@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["FinishReason"],"fn":["create_model","create_text_generation","create_tokenizer"],"mod":["generate_parameter","model_processor","models","sampler","text_generator","token_generator"],"struct":["TextGeneration"]};
+window.SIDEBAR_ITEMS = {"enum":["FinishReason"],"mod":["generate_parameter","loader","model_processor","models","sampler","text_generation","text_generator","token_generator"]};

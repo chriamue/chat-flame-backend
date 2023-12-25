@@ -71,9 +71,9 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::api::model::GenerateRequest;
-<span class="kw">use </span><span class="kw">crate</span>::llm::generate_parameter::GenerateParameter;
-<span class="kw">use crate</span>::{config::Config, llm::create_text_generation};
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::llm::generate_parameter::GenerateParameter;
+<span class="kw">use </span><span class="kw">crate</span>::llm::text_generation::create_text_generation;
+<span class="kw">use crate</span>::{api::model::GenerateRequest, config::Config};
 <span class="kw">use </span>axum::{
     extract::State,
     response::{sse::Event, IntoResponse, Sse},

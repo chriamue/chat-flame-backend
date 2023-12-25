@@ -91,7 +91,7 @@
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     api::model::{ErrorResponse, GenerateRequest, GenerateResponse},
     config::Config,
-    llm::{create_text_generation, generate_parameter::GenerateParameter},
+    llm::{generate_parameter::GenerateParameter, text_generation::create_text_generation},
 };
 <span class="kw">use </span>axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
