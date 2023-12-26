@@ -18,11 +18,34 @@ pub enum TokenGeneratorResult {
     Finish(FinishReason),
 }
 
+/// A trait defining the behavior of a token generator.
+///
+/// This trait is implemented by objects that can generate tokens based on some internal logic.
+/// The trait provides methods to initialize the generator and to retrieve the next token in the sequence.
 pub trait TokenGeneratorTrait: Send {
+    /// Initializes the token generator with a given set of prompt tokens.
+    ///
+    /// # Arguments
+    ///
+    /// * `prompt_tokens` - A vector of initial tokens used to start the token generation process.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating the success or failure of the initialization.
     fn init(&mut self, prompt_tokens: Vec<u32>) -> Result<()>;
+
+    /// Retrieves the next token from the generator.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the `TokenGeneratorResult`, which can be either a token or a signal to finish generation.
     fn next(&mut self) -> Result<TokenGeneratorResult>;
 }
 
+/// A token generator that generates tokens based on provided parameters, model processor, and sampler.
+///
+/// This struct implements the `TokenGeneratorTrait` and provides functionality to generate tokens
+/// for text generation tasks.
 pub struct TokenGenerator {
     index: usize,
     stop_tokens: HashSet<u32>,
@@ -37,6 +60,18 @@ pub struct TokenGenerator {
 unsafe impl Send for TokenGenerator {}
 
 impl TokenGenerator {
+    /// Creates a new `TokenGenerator` with the specified parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `stop_tokens` - A set of token IDs that signal the end of token generation.
+    /// * `parameter` - The parameters to use for token generation.
+    /// * `model` - A model processor to generate logits.
+    /// * `sampler` - A sampler to sample tokens from logits.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `TokenGenerator`.
     pub fn new(
         stop_tokens: HashSet<u32>,
         parameter: GenerateParameter,
