@@ -84,7 +84,6 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>axum::{
     response::Redirect,
     routing::{get, post},
@@ -114,7 +113,6 @@
 /// # Returns
 ///
 /// An instance of `axum::Router` configured with all routes and the Swagger UI.
-
 </span><span class="kw">pub fn </span>server(config: Config) -&gt; Router {
     <span class="kw">let </span>router = Router::new()
         .route(<span class="string">&quot;/&quot;</span>, get(|| <span class="kw">async </span>{ Redirect::permanent(<span class="string">&quot;/swagger-ui&quot;</span>) }))

@@ -221,15 +221,31 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! This module defines the data structures used for API requests and responses.
+//! These include various types of responses for text generation, error handling,
+//! and information about the model and generation parameters.
+
+</span><span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>utoipa::ToSchema;
 
-<span class="attr">#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
+<span class="doccomment">/// Enumerates the reasons why text generation may finish.
+</span><span class="attr">#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 #[serde(rename_all = <span class="string">&quot;snake_case&quot;</span>)]
 </span><span class="kw">pub enum </span>FinishReason {
-    Length,
-    EosToken,
-    StopSequence,
+    <span class="doccomment">/// Generation finished due to reaching the maximum length.
+    </span>Length,
+    <span class="doccomment">/// Generation finished due to reaching the end-of-sequence token.
+    </span>EosToken,
+    <span class="doccomment">/// Generation finished due to reaching a stop sequence.
+    </span>StopSequence,
 }
 
 <span class="attr">#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
