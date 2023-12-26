@@ -61,14 +61,7 @@ fn default_repeat_last_n() -> usize {
 
 impl Default for GenerateParameter {
     fn default() -> Self {
-        serde_json::from_str("{}").unwrap_or_else(|_| GenerateParameter {
-            max_new_tokens: default_max_new_tokens(),
-            seed: default_seed(),
-            temperature: default_temperature(),
-            top_p: default_top_p(),
-            repeat_penalty: default_repeat_penalty(),
-            repeat_last_n: default_repeat_last_n(),
-        })
+        serde_json::from_str("{}").unwrap()
     }
 }
 

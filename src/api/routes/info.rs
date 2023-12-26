@@ -1,7 +1,12 @@
+//! This module contains the endpoint for retrieving model information.
+
 use crate::{api::model::Info, config::Config};
 use axum::{extract::State, http::StatusCode, Json};
 
-/// Endpoint to get model information
+/// Endpoint to get model information.
+///
+/// This endpoint provides detailed information about the model used in the application,
+/// including its configuration and capabilities.
 #[utoipa::path(
     get,
     path = "/info",

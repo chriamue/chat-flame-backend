@@ -1,11 +1,19 @@
+//! This module defines the data structures used for API requests and responses.
+//! These include various types of responses for text generation, error handling,
+//! and information about the model and generation parameters.
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+/// Enumerates the reasons why text generation may finish.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum FinishReason {
+    /// Generation finished due to reaching the maximum length.
     Length,
+    /// Generation finished due to reaching the end-of-sequence token.
     EosToken,
+    /// Generation finished due to reaching a stop sequence.
     StopSequence,
 }
 

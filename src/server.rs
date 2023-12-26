@@ -27,7 +27,6 @@ use crate::{
 /// # Returns
 ///
 /// An instance of `axum::Router` configured with all routes and the Swagger UI.
-
 pub fn server(config: Config) -> Router {
     let router = Router::new()
         .route("/", get(|| async { Redirect::permanent("/swagger-ui") }))
