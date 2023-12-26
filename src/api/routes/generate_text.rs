@@ -5,7 +5,27 @@ use crate::{
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
-/// Generate tokens
+/// Asynchronous handler for generating text.
+///
+/// This function handles POST requests to the `/generate` endpoint. It takes a JSON payload
+/// representing a `GenerateRequest` and uses the configuration and parameters specified to
+/// generate text. The generated text is returned in a `GenerateResponse` if successful.
+///
+/// # Parameters
+/// - `config`: Application state holding the global configuration.
+/// - `Json(payload)`: JSON payload containing the input text and generation parameters.
+///
+/// # Responses
+/// - `200 OK`: Successful text generation with `GenerateResponse`.
+/// - `422 Unprocessable Entity`: Input validation error with `ErrorResponse`.
+/// - `424 Failed Dependency`: Generation error with `ErrorResponse`.
+/// - `429 Too Many Requests`: Model is overloaded with `ErrorResponse`.
+/// - `500 Internal Server Error`: Incomplete generation with `ErrorResponse`.
+///
+/// # Usage
+/// This endpoint is suitable for generating text based on given prompts and parameters.
+/// It can be used in scenarios where batch text generation is required, such as content
+/// creation, language modeling, or any application needing on-demand text generation.
 #[utoipa::path(
     post,
     path = "/generate",

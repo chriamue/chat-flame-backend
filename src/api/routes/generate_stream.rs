@@ -10,7 +10,24 @@ use futures::stream::StreamExt;
 use log::debug;
 use std::vec;
 
-/// Generate tokens
+/// Asynchronous handler for generating text through a streaming API.
+///
+/// This function handles POST requests to the `/generate_stream` endpoint. It takes a JSON payload
+/// representing a `GenerateRequest` and uses the configuration and parameters specified to
+/// generate text using a streaming approach. The response is a stream of Server-Sent Events (SSE),
+/// allowing clients to receive generated text in real-time as it is produced.
+///
+/// # Parameters
+/// - `config`: Application state holding the global configuration.
+/// - `Json(payload)`: JSON payload containing the input text and generation parameters.
+///
+/// # Responses
+/// - `200 OK`: Stream of generated text as `StreamResponse` events.
+/// - Error responses: Descriptive error messages if any issues occur.
+///
+/// # Usage
+/// This endpoint is suitable for scenarios where real-time text generation is required,
+/// such as interactive chatbots or live content creation tools.
 #[utoipa::path(
     post,
     path = "/generate_stream",

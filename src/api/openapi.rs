@@ -14,6 +14,7 @@ use utoipa::OpenApi;
 #[openapi(
     // List of API endpoints to be included in the documentation.
     paths(
+        super::routes::generate::generate_handler,
         super::routes::generate_text::generate_text_handler,
         super::routes::generate_stream::generate_stream_handler,
         super::routes::health::get_health_handler,
@@ -50,6 +51,7 @@ mod tests {
     fn api_doc_contains_all_endpoints() {
         let api_doc = ApiDoc::openapi();
         let paths = api_doc.paths.paths;
+        assert!(paths.contains_key("/"));
         assert!(paths.contains_key("/generate"));
         assert!(paths.contains_key("/generate_stream"));
         assert!(paths.contains_key("/health"));
