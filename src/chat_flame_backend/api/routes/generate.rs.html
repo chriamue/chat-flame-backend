@@ -123,59 +123,102 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>axum::{
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 
 <span class="kw">use crate</span>::{
     api::model::{CompatGenerateRequest, ErrorResponse, GenerateRequest},
     config::Config,
 };
 
-<span class="kw">use </span><span class="kw">super</span>::generate_stream::generate_stream_handler;
+<span class="kw">use super</span>::{generate_stream::generate_stream_handler, generate_text_handler};
 
 <span class="doccomment">/// Handler for generating text tokens.
 ///
-/// This endpoint accepts a `CompatGenerateRequest` and returns a stream of generated text.
-/// It requires the `stream` field in the request to be true. If `stream` is false,
-/// the handler will return a `StatusCode::NOT_IMPLEMENTED` error.
+/// This endpoint accepts a `CompatGenerateRequest` and returns a stream of generated text
+/// or a single text response based on the `stream` field in the request. If `stream` is true,
+/// it returns a stream of `StreamResponse`. If `stream` is false, it returns `GenerateResponse`.
 ///
 /// # Arguments
 /// * `config` - State containing the application configuration.
 /// * `payload` - JSON payload containing the input text and optional parameters.
 ///
 /// # Responses
-/// * `200 OK` - Successful generation of text, returns a stream of `StreamResponse`.
-/// * `501 Not Implemented` - Returned if `stream` field in request is false.
+/// * `200 OK` - Successful generation of text.
+/// * `501 Not Implemented` - Returned if streaming is not implemented.
 </span><span class="attr">#[utoipa::path(
     post,
+    tag = <span class="string">&quot;Text Generation Inference&quot;</span>,
     path = <span class="string">&quot;/&quot;</span>,
     request_body = CompatGenerateRequest,
     responses(
-        (status = <span class="number">200</span>, description = <span class="string">&quot;Generated Text&quot;</span>, body = StreamResponse),
-        (status = <span class="number">501</span>, description = <span class="string">&quot;Streaming not enabled&quot;</span>, body = ErrorResponse),
-    ),
-    tag = <span class="string">&quot;Text Generation Inference&quot;
-</span>)]
+        (status = <span class="number">200</span>, description = <span class="string">&quot;Generated Text&quot;</span>,
+         content(
+             (<span class="string">&quot;application/json&quot; </span>= GenerateResponse),
+             (<span class="string">&quot;text/event-stream&quot; </span>= StreamResponse),
+         )
+        ),
+        (status = <span class="number">424</span>, description = <span class="string">&quot;Generation Error&quot;</span>, body = ErrorResponse,
+         example = <span class="macro">json!</span>({<span class="string">&quot;error&quot;</span>: <span class="string">&quot;Request failed during generation&quot;</span>})),
+        (status = <span class="number">429</span>, description = <span class="string">&quot;Model is overloaded&quot;</span>, body = ErrorResponse,
+         example = <span class="macro">json!</span>({<span class="string">&quot;error&quot;</span>: <span class="string">&quot;Model is overloaded&quot;</span>})),
+        (status = <span class="number">422</span>, description = <span class="string">&quot;Input validation error&quot;</span>, body = ErrorResponse,
+         example = <span class="macro">json!</span>({<span class="string">&quot;error&quot;</span>: <span class="string">&quot;Input validation error&quot;</span>})),
+        (status = <span class="number">500</span>, description = <span class="string">&quot;Incomplete generation&quot;</span>, body = ErrorResponse,
+         example = <span class="macro">json!</span>({<span class="string">&quot;error&quot;</span>: <span class="string">&quot;Incomplete generation&quot;</span>})),
+    )
+)]
 </span><span class="kw">pub async fn </span>generate_handler(
     config: State&lt;Config&gt;,
     Json(payload): Json&lt;CompatGenerateRequest&gt;,
-) -&gt; <span class="kw">impl </span>IntoResponse {
-    <span class="kw">if </span>!payload.stream {
-        <span class="kw">return </span><span class="prelude-val">Err</span>((
-            StatusCode::NOT_IMPLEMENTED,
-            Json(ErrorResponse {
-                error: <span class="string">&quot;Use /generate endpoint if not streaming&quot;</span>.to_string(),
-                error_type: <span class="prelude-val">None</span>,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Response, (StatusCode, Json&lt;ErrorResponse&gt;)&gt; {
+    <span class="kw">if </span>payload.stream {
+        <span class="prelude-val">Ok</span>(generate_stream_handler(
+            config,
+            Json(GenerateRequest {
+                inputs: payload.inputs,
+                parameters: payload.parameters,
             }),
-        ));
+        )
+        .<span class="kw">await
+        </span>.into_response())
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Ok</span>(generate_text_handler(
+            config,
+            Json(GenerateRequest {
+                inputs: payload.inputs,
+                parameters: payload.parameters,
+            }),
+        )
+        .<span class="kw">await
+        </span>.into_response())
     }
-    <span class="prelude-val">Ok</span>(generate_stream_handler(
-        config,
-        Json(GenerateRequest {
-            inputs: payload.inputs,
-            parameters: payload.parameters,
-        }),
-    )
-    .<span class="kw">await</span>)
 }
 
 <span class="attr">#[cfg(test)]
@@ -222,6 +265,7 @@
 
     <span class="doccomment">/// Test the generate_handler function for streaming disabled.
     </span><span class="attr">#[tokio::test]
+    #[ignore = <span class="string">&quot;Will download model from HuggingFace&quot;</span>]
     </span><span class="kw">async fn </span>test_generate_handler_stream_disabled() {
         <span class="kw">let </span>app = Router::new()
             .route(<span class="string">&quot;/&quot;</span>, post(generate_handler))
@@ -245,7 +289,7 @@
             .<span class="kw">await
             </span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(response.status(), StatusCode::NOT_IMPLEMENTED);
+        <span class="macro">assert_eq!</span>(response.status(), StatusCode::OK);
     }
 }
 </code></pre></div></section></main></body></html>

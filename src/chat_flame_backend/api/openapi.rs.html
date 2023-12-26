@@ -56,6 +56,8 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::model::{
     CompatGenerateRequest, FinishReason, GenerateParameters, GenerateRequest, GenerateResponse,
     Info, StreamDetails, StreamResponse, Token,
@@ -72,6 +74,7 @@
 #[openapi(
     <span class="comment">// List of API endpoints to be included in the documentation.
     </span>paths(
+        <span class="kw">super</span>::routes::generate::generate_handler,
         <span class="kw">super</span>::routes::generate_text::generate_text_handler,
         <span class="kw">super</span>::routes::generate_stream::generate_stream_handler,
         <span class="kw">super</span>::routes::health::get_health_handler,
@@ -108,6 +111,7 @@
     </span><span class="kw">fn </span>api_doc_contains_all_endpoints() {
         <span class="kw">let </span>api_doc = ApiDoc::openapi();
         <span class="kw">let </span>paths = api_doc.paths.paths;
+        <span class="macro">assert!</span>(paths.contains_key(<span class="string">&quot;/&quot;</span>));
         <span class="macro">assert!</span>(paths.contains_key(<span class="string">&quot;/generate&quot;</span>));
         <span class="macro">assert!</span>(paths.contains_key(<span class="string">&quot;/generate_stream&quot;</span>));
         <span class="macro">assert!</span>(paths.contains_key(<span class="string">&quot;/health&quot;</span>));
