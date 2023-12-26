@@ -1,3 +1,8 @@
+//! Model Loader Module.
+//!
+//! This module contains functions for loading model weights and tokenizers for text generation.
+//! It supports various models and uses the Hugging Face Hub for downloading model files.
+
 use std::path::PathBuf;
 
 use super::models::Models;
@@ -10,6 +15,7 @@ use hf_hub::{Repo, RepoType};
 use log::{debug, info};
 use tokenizers::Tokenizer;
 
+/// Formats the size in bytes into a human-readable string.
 fn format_size(size_in_bytes: usize) -> String {
     if size_in_bytes < 1_000 {
         format!("{}B", size_in_bytes)
@@ -22,6 +28,17 @@ fn format_size(size_in_bytes: usize) -> String {
     }
 }
 
+/// Creates and loads model weights from the Hugging Face Hub.
+///
+/// # Arguments
+///
+/// * `model` - The model enum specifying the model to load.
+/// * `cache_dir` - Optional directory for caching downloaded models.
+///
+/// # Returns
+///
+/// Returns a result containing a tuple of `ModelWeights` and `Device`,
+/// or an error if loading fails.
 pub fn create_model(
     model: Models,
     cache_dir: &Option<PathBuf>,
@@ -116,6 +133,16 @@ pub fn create_model(
     Ok((model, Device::Cpu))
 }
 
+/// Creates and loads a tokenizer from the Hugging Face Hub.
+///
+/// # Arguments
+///
+/// * `model` - The model enum specifying the tokenizer to load.
+///
+/// # Returns
+///
+/// Returns a result containing the `Tokenizer`,
+/// or an error if loading fails.
 pub fn create_tokenizer(model: Models) -> Result<Tokenizer, Box<dyn std::error::Error>> {
     let tokenizer_path = {
         let api = hf_hub::api::sync::Api::new()?;
@@ -125,4 +152,17 @@ pub fn create_tokenizer(model: Models) -> Result<Tokenizer, Box<dyn std::error::
     };
     let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(E::msg)?;
     Ok(tokenizer)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_size() {
+        assert_eq!(format_size(999), "999B");
+        assert_eq!(format_size(1000), "1.00KB");
+        assert_eq!(format_size(1000000), "1.00MB");
+        assert_eq!(format_size(1000000000), "1.00GB");
+    }
 }

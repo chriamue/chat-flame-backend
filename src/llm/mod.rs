@@ -58,10 +58,10 @@ pub mod token_generator;
 pub enum FinishReason {
     /// Generation stopped because the maximum length was reached.
     Length,
-    
+
     /// Generation stopped due to the model producing an end-of-sequence token.
     EosToken,
-    
+
     /// Generation stopped because a specified stop sequence was encountered.
     StopSequence,
 }
