@@ -126,7 +126,52 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! Model Loader Module.
+//!
+//! This module contains functions for loading model weights and tokenizers for text generation.
+//! It supports various models and uses the Hugging Face Hub for downloading model files.
+
+</span><span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span><span class="kw">super</span>::models::Models;
 <span class="kw">use </span>anyhow::{Error <span class="kw">as </span>E, <span class="prelude-ty">Result</span>};
@@ -138,7 +183,8 @@
 <span class="kw">use </span>log::{debug, info};
 <span class="kw">use </span>tokenizers::Tokenizer;
 
-<span class="kw">fn </span>format_size(size_in_bytes: usize) -&gt; String {
+<span class="doccomment">/// Formats the size in bytes into a human-readable string.
+</span><span class="kw">fn </span>format_size(size_in_bytes: usize) -&gt; String {
     <span class="kw">if </span>size_in_bytes &lt; <span class="number">1_000 </span>{
         <span class="macro">format!</span>(<span class="string">&quot;{}B&quot;</span>, size_in_bytes)
     } <span class="kw">else if </span>size_in_bytes &lt; <span class="number">1_000_000 </span>{
@@ -150,7 +196,18 @@
     }
 }
 
-<span class="kw">pub fn </span>create_model(
+<span class="doccomment">/// Creates and loads model weights from the Hugging Face Hub.
+///
+/// # Arguments
+///
+/// * `model` - The model enum specifying the model to load.
+/// * `cache_dir` - Optional directory for caching downloaded models.
+///
+/// # Returns
+///
+/// Returns a result containing a tuple of `ModelWeights` and `Device`,
+/// or an error if loading fails.
+</span><span class="kw">pub fn </span>create_model(
     model: Models,
     cache_dir: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(ModelWeights, Device), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
@@ -244,7 +301,17 @@
     <span class="prelude-val">Ok</span>((model, Device::Cpu))
 }
 
-<span class="kw">pub fn </span>create_tokenizer(model: Models) -&gt; <span class="prelude-ty">Result</span>&lt;Tokenizer, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+<span class="doccomment">/// Creates and loads a tokenizer from the Hugging Face Hub.
+///
+/// # Arguments
+///
+/// * `model` - The model enum specifying the tokenizer to load.
+///
+/// # Returns
+///
+/// Returns a result containing the `Tokenizer`,
+/// or an error if loading fails.
+</span><span class="kw">pub fn </span>create_tokenizer(model: Models) -&gt; <span class="prelude-ty">Result</span>&lt;Tokenizer, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
     <span class="kw">let </span>tokenizer_path = {
         <span class="kw">let </span>api = hf_hub::api::sync::Api::new()<span class="question-mark">?</span>;
         <span class="kw">let </span>repo = model.tokenizer_repo();
@@ -253,5 +320,18 @@
     </span>};
     <span class="kw">let </span>tokenizer = Tokenizer::from_file(tokenizer_path).map_err(E::msg)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(tokenizer)
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_format_size() {
+        <span class="macro">assert_eq!</span>(format_size(<span class="number">999</span>), <span class="string">&quot;999B&quot;</span>);
+        <span class="macro">assert_eq!</span>(format_size(<span class="number">1000</span>), <span class="string">&quot;1.00KB&quot;</span>);
+        <span class="macro">assert_eq!</span>(format_size(<span class="number">1000000</span>), <span class="string">&quot;1.00MB&quot;</span>);
+        <span class="macro">assert_eq!</span>(format_size(<span class="number">1000000000</span>), <span class="string">&quot;1.00GB&quot;</span>);
+    }
 }
 </code></pre></div></section></main></body></html>
