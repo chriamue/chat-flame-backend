@@ -96,6 +96,55 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     token_generator::{TokenGeneratorResult, TokenGeneratorTrait},
     FinishReason,
@@ -104,27 +153,76 @@
 <span class="kw">use </span>candle_examples::token_output_stream::TokenOutputStream;
 <span class="kw">mod </span>dummy_text_generator;
 
-<span class="kw">pub type </span>TextProbability = (String, f32);
+<span class="doccomment">/// Represents the probability associated with a piece of generated text.
+</span><span class="kw">pub type </span>TextProbability = (String, f32);
 
-<span class="attr">#[derive(Debug, PartialEq)]
+<span class="doccomment">/// Enumerates possible results from a text generation process.
+///
+/// This enum is used to encapsulate the outcomes of text generation, including
+/// both the generation of a new token and the conclusion of the generation process.
+</span><span class="attr">#[derive(Debug, PartialEq)]
 </span><span class="kw">pub enum </span>TextGeneratorResult {
-    Token(TextProbability),
-    Finish(FinishReason),
+    <span class="doccomment">/// Represents a generated piece of text along with its probability.
+    ///
+    /// The `String` is the generated text, and the `f32` is the probability associated with it.
+    </span>Token(TextProbability),
+
+    <span class="doccomment">/// Indicates the completion of the text generation process.
+    ///
+    /// This variant is used when the generation process reaches an end, either due to reaching
+    /// a specified limit or encountering a stopping condition.
+    </span>Finish(FinishReason),
 }
 
-<span class="doccomment">/// Trait for text generation functionality.
+<span class="doccomment">/// A trait defining the core functionality for text generation.
+///
+/// This trait encapsulates the necessary methods for initializing the generation process with a
+/// prompt and then producing text iteratively.
 </span><span class="kw">pub trait </span>TextGeneratorTrait {
-    <span class="kw">fn </span>init(<span class="kw-2">&amp;mut </span><span class="self">self</span>, prompt: String) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TextGeneratorResult&gt;;
+    <span class="doccomment">/// Initializes the text generation process with a given prompt.
+    ///
+    /// This method sets up the necessary state for text generation based on the provided prompt.
+    ///
+    /// # Arguments
+    ///
+    /// * `prompt` - A `String` that serves as the starting point for text generation.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure of the initialization process.
+    </span><span class="kw">fn </span>init(<span class="kw-2">&amp;mut </span><span class="self">self</span>, prompt: String) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;;
+
+    <span class="doccomment">/// Generates the next piece of text in the sequence.
+    ///
+    /// This method should be called iteratively to generate text progressively.
+    /// It provides the next piece of text based on the current state of the generator.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` wrapping a `TextGeneratorResult`, which can be either a generated token
+    /// or an indication that the generation process has finished.
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TextGeneratorResult&gt;;
 }
 
-<span class="kw">pub struct </span>TextGenerator {
-    tokenizer: TokenOutputStream,
-    token_generator: Box&lt;<span class="kw">dyn </span>TokenGeneratorTrait&gt;,
+<span class="doccomment">/// Handles the text generation process.
+///
+/// This struct is responsible for managing the token generation and converting tokens into text.
+</span><span class="kw">pub struct </span>TextGenerator {
+    <span class="doccomment">/// The tokenizer used to encode the prompt and decode the generated tokens.
+    </span>tokenizer: TokenOutputStream,
+
+    <span class="doccomment">/// The token generator that produces tokens based on the model&#39;s output.
+    </span>token_generator: Box&lt;<span class="kw">dyn </span>TokenGeneratorTrait&gt;,
 }
 
 <span class="kw">impl </span>TextGenerator {
-    <span class="kw">pub fn </span>new(
+    <span class="doccomment">/// Constructs a new `TextGenerator`.
+    ///
+    /// # Arguments
+    ///
+    /// * `tokenizer` - Tokenizer for encoding prompts and decoding generated tokens.
+    /// * `token_generator` - Token generator that provides the logic for generating tokens.
+    </span><span class="kw">pub fn </span>new(
         tokenizer: TokenOutputStream,
         token_generator: Box&lt;<span class="kw">dyn </span>TokenGeneratorTrait&gt;,
     ) -&gt; <span class="self">Self </span>{
