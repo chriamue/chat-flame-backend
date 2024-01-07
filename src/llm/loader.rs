@@ -113,7 +113,21 @@ pub fn create_model(
                 | Models::Starling7bAlpha => {
                     Model::Llama(ModelWeights::from_gguf(content, &mut file)?)
                 }
-                Models::PhiV1 | Models::PhiV1_5 | Models::PhiV2 | Models::PhiHermes => {
+                Models::PhiV1 | Models::PhiV1_5 | Models::PhiHermes => {
+                    let vb = candle_transformers::quantized_var_builder::VarBuilder::from_gguf(
+                        model_path,
+                    )?;
+                    let config = match model {
+                        Models::PhiV1 => candle_transformers::models::mixformer::Config::v1(),
+                        Models::PhiV1_5 => candle_transformers::models::mixformer::Config::v1_5(),
+                        Models::PhiHermes => {
+                            candle_transformers::models::mixformer::Config::phi_hermes_1_3b()
+                        }
+                        _ => unreachable!(),
+                    };
+                    Model::MixFormer(candle_transformers::models::quantized_mixformer::MixFormerSequentialForCausalLM::new(&config, vb)?)
+                }
+                Models::PhiV2 => {
                     let vb = candle_transformers::quantized_var_builder::VarBuilder::from_gguf(
                         model_path,
                     )?;
