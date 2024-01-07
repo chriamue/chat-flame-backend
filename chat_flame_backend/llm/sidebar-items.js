@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["FinishReason"],"mod":["generate_parameter","loader","model_processor","models","sampler","text_generation","text_generator","token_generator"]};
+window.SIDEBAR_ITEMS = {"enum":["FinishReason","Model"],"mod":["generate_parameter","loader","model_processor","models","sampler","text_generation","text_generator","token_generator"]};
