@@ -241,8 +241,8 @@ pub fn create_text_generation(
     model: Models,
     cache_dir: &Option<PathBuf>,
 ) -> Result<TextGeneration, Box<dyn std::error::Error>> {
-    let tokenizer = create_tokenizer(model)?;
-    let model = create_model(model, cache_dir)?;
+    let tokenizer = create_tokenizer(model).expect("Failed to create tokenizer");
+    let model = create_model(model, cache_dir).expect("Failed to create model");
 
     let device = Device::Cpu;
 

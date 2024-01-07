@@ -126,6 +126,7 @@ pub fn create_model(
                 | Models::L70bChat
                 | Models::OpenChat35
                 | Models::Starling7bAlpha => 8,
+                Models::PhiHermes | Models::PhiV1 | Models::PhiV1_5 | Models::PhiV2 => 4,
             };
             ModelWeights::from_ggml(content, default_gqa)?
         }

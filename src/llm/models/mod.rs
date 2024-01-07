@@ -43,6 +43,15 @@ pub enum Models {
     Mixtral,
     #[serde(rename = "mixtral-instruct")]
     MixtralInstruct,
+
+    #[serde(rename = "phi-hermes")]
+    PhiHermes,
+    #[serde(rename = "phi-v1")]
+    PhiV1,
+    #[serde(rename = "phi-v1.5")]
+    PhiV1_5,
+    #[serde(rename = "phi-v2")]
+    PhiV2,
 }
 
 #[derive(Deserialize)]
@@ -62,19 +71,6 @@ impl FromStr for Models {
 impl Models {
     pub fn is_mistral(&self) -> bool {
         match self {
-            Self::L7b
-            | Self::L13b
-            | Self::L70b
-            | Self::L7bChat
-            | Self::L13bChat
-            | Self::L70bChat
-            | Self::L7bCode
-            | Self::L13bCode
-            | Self::L34bCode
-            | Self::Leo7b
-            | Self::Leo13b => false,
-            // Zephyr and OpenChat are fine tuned versions of mistral and should be treated in the
-            // same way. Starling is a fine tuned version of OpenChat.
             Self::OpenChat35
             | Self::Starling7bAlpha
             | Self::Zephyr7bAlpha
@@ -83,52 +79,28 @@ impl Models {
             | Self::MixtralInstruct
             | Self::Mistral7b
             | Self::Mistral7bInstruct => true,
+            _ => false,
         }
     }
 
     pub fn is_zephyr(&self) -> bool {
         match self {
-            Self::L7b
-            | Self::L13b
-            | Self::L70b
-            | Self::L7bChat
-            | Self::L13bChat
-            | Self::L70bChat
-            | Self::L7bCode
-            | Self::L13bCode
-            | Self::L34bCode
-            | Self::Leo7b
-            | Self::Leo13b
-            | Self::Mixtral
-            | Self::MixtralInstruct
-            | Self::Mistral7b
-            | Self::Mistral7bInstruct
-            | Self::OpenChat35
-            | Self::Starling7bAlpha => false,
             Self::Zephyr7bAlpha | Self::Zephyr7bBeta => true,
+            _ => false,
         }
     }
 
     pub fn is_open_chat(&self) -> bool {
         match self {
-            Self::L7b
-            | Self::L13b
-            | Self::L70b
-            | Self::L7bChat
-            | Self::L13bChat
-            | Self::L70bChat
-            | Self::L7bCode
-            | Self::L13bCode
-            | Self::L34bCode
-            | Self::Leo7b
-            | Self::Leo13b
-            | Self::Mixtral
-            | Self::MixtralInstruct
-            | Self::Mistral7b
-            | Self::Mistral7bInstruct
-            | Self::Zephyr7bAlpha
-            | Self::Zephyr7bBeta => false,
             Self::OpenChat35 | Self::Starling7bAlpha => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_phi(&self) -> bool {
+        match self {
+            Self::PhiHermes | Self::PhiV1 | Self::PhiV1_5 | Self::PhiV2 => true,
+            _ => false,
         }
     }
 
@@ -153,6 +125,10 @@ impl Models {
             | Models::Zephyr7bBeta => "mistralai/Mistral-7B-v0.1",
             Models::OpenChat35 => "openchat/openchat_3.5",
             Models::Starling7bAlpha => "berkeley-nest/Starling-LM-7B-alpha",
+            Models::PhiV1 => "microsoft/phi-1",
+            Models::PhiV1_5 => "microsoft/phi-1.5",
+            Models::PhiV2 => "microsoft/phi-2",
+            Models::PhiHermes => "lmz/candle-quantized-phi",
         }
     }
 
@@ -210,6 +186,10 @@ impl Models {
                 "TheBloke/Starling-LM-7B-alpha-GGUF",
                 "starling-lm-7b-alpha.Q4_K_M.gguf",
             ),
+            Models::PhiV1 => ("lmz/candle-quantized-phi", "model-v1-q4k.gguf"),
+            Models::PhiV1_5 => ("lmz/candle-quantized-phi", "model-q4k.gguf"),
+            Models::PhiV2 => ("lmz/candle-quantized-phi", "model-v2-q4k.gguf"),
+            Models::PhiHermes => ("lmz/candle-quantized-phi", "model-phi-hermes-1_3B-q4k.gguf"),
         }
     }
 }

@@ -16,8 +16,16 @@ cargo build --release
 
 ### Running
 
+Run the server
+
 ```bash
 cargo run --release
+```
+
+Run one of the models
+
+```bash
+cargo run --release -- --model phi-v2 --prompt 'write me fibonacci in rust'
 ```
 
 ### Docker
@@ -68,6 +76,7 @@ python test.py
 - [x] Zephyr
 - [x] OpenChat
 - [x] Starling
+- [x] [Phi](https://huggingface.co/microsoft/phi-2) (Phi-1, Phi-1.5, Phi-2)
 - [ ] GPT-Neo
 - [ ] GPT-J
 - [ ] Llama
@@ -76,6 +85,10 @@ python test.py
 ### Mistral
 
 ["lmz/candle-mistral"](https://huggingface.co/lmz/candle-mistral)
+
+### Phi
+
+["microsoft/phi-2"](https://huggingface.co/microsoft/phi-2)
 
 ## Performance
 
