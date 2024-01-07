@@ -5,6 +5,8 @@
 
 use std::path::PathBuf;
 
+use crate::llm::Model;
+
 use super::models::Models;
 use anyhow::{Error as E, Result};
 use candle_core::quantized::{ggml_file, gguf_file};
@@ -42,7 +44,7 @@ fn format_size(size_in_bytes: usize) -> String {
 pub fn create_model(
     model: Models,
     cache_dir: &Option<PathBuf>,
-) -> Result<(ModelWeights, Device), Box<dyn std::error::Error>> {
+) -> Result<(Model, Device), Box<dyn std::error::Error>> {
     info!(
         "avx: {}, neon: {}, simd128: {}, f16c: {}",
         candle_core::utils::with_avx(),
@@ -76,20 +78,48 @@ pub fn create_model(
 
     let model = match model_path.extension().and_then(|v| v.to_str()) {
         Some("gguf") => {
-            let model = gguf_file::Content::read(&mut file)?;
+            let content = gguf_file::Content::read(&mut file)?;
             let mut total_size_in_bytes = 0;
-            for (_, tensor) in model.tensor_infos.iter() {
+            for (_, tensor) in content.tensor_infos.iter() {
                 let elem_count = tensor.shape.elem_count();
                 total_size_in_bytes +=
                     elem_count * tensor.ggml_dtype.type_size() / tensor.ggml_dtype.blck_size();
             }
             debug!(
                 "loaded {:?} tensors ({}) in {:.2}s",
-                model.tensor_infos.len(),
+                content.tensor_infos.len(),
                 &format_size(total_size_in_bytes),
                 start.elapsed().as_secs_f32(),
             );
-            ModelWeights::from_gguf(model, &mut file)?
+            match model {
+                Models::L7b
+                | Models::L13b
+                | Models::L7bChat
+                | Models::L13bChat
+                | Models::L7bCode
+                | Models::L13bCode
+                | Models::L34bCode
+                | Models::Leo7b
+                | Models::Leo13b => Model::Llama(ModelWeights::from_gguf(content, &mut file)?),
+                Models::Mixtral
+                | Models::MixtralInstruct
+                | Models::Mistral7b
+                | Models::Mistral7bInstruct
+                | Models::Zephyr7bAlpha
+                | Models::Zephyr7bBeta
+                | Models::L70b
+                | Models::L70bChat
+                | Models::OpenChat35
+                | Models::Starling7bAlpha => {
+                    Model::Llama(ModelWeights::from_gguf(content, &mut file)?)
+                }
+                Models::PhiV1 | Models::PhiV1_5 | Models::PhiV2 | Models::PhiHermes => {
+                    let vb = candle_transformers::quantized_var_builder::VarBuilder::from_gguf(
+                        model_path,
+                    )?;
+                    Model::MixFormer(candle_transformers::models::quantized_mixformer::MixFormerSequentialForCausalLM::new_v2(&candle_transformers::models::mixformer::Config::v2(), vb)?)
+                }
+            }
         }
         Some("ggml" | "bin") | Some(_) | None => {
             let content = ggml_file::Content::read(&mut file)?;
@@ -128,7 +158,33 @@ pub fn create_model(
                 | Models::Starling7bAlpha => 8,
                 Models::PhiHermes | Models::PhiV1 | Models::PhiV1_5 | Models::PhiV2 => 4,
             };
-            ModelWeights::from_ggml(content, default_gqa)?
+
+            match model {
+                Models::L7b
+                | Models::L13b
+                | Models::L7bChat
+                | Models::L13bChat
+                | Models::L7bCode
+                | Models::L13bCode
+                | Models::L34bCode
+                | Models::Leo7b
+                | Models::Leo13b => Model::Llama(ModelWeights::from_ggml(content, default_gqa)?),
+                Models::Mixtral
+                | Models::MixtralInstruct
+                | Models::Mistral7b
+                | Models::Mistral7bInstruct
+                | Models::Zephyr7bAlpha
+                | Models::Zephyr7bBeta
+                | Models::L70b
+                | Models::L70bChat
+                | Models::OpenChat35
+                | Models::Starling7bAlpha => {
+                    Model::Llama(ModelWeights::from_ggml(content, default_gqa)?)
+                }
+                Models::PhiV1 | Models::PhiV1_5 | Models::PhiV2 | Models::PhiHermes => {
+                    Model::Llama(ModelWeights::from_ggml(content, default_gqa)?)
+                }
+            }
         }
     };
     Ok((model, Device::Cpu))

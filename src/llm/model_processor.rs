@@ -4,8 +4,8 @@
 //! which are used for processing input tensors and generating output tensors
 //! representing logits from a language model.
 
+use super::Model;
 use candle_core::{Result, Tensor};
-use candle_transformers::models::quantized_llama::ModelWeights;
 
 /// A trait for processing model inputs and generating outputs.
 ///
@@ -25,10 +25,12 @@ pub trait ModelProcessor {
     fn forward(&mut self, x: &Tensor, index_pos: usize) -> Result<Tensor>;
 }
 
-/// Implementation of `ModelProcessor` for the `ModelWeights` from `candle_transformers`.
-impl ModelProcessor for ModelWeights {
+impl ModelProcessor for Model {
     fn forward(&mut self, x: &Tensor, index_pos: usize) -> Result<Tensor> {
-        Self::forward(self, x, index_pos)
+        match self {
+            Model::Llama(model) => model.forward(x, index_pos),
+            Model::MixFormer(model) => model.forward(x),
+        }
     }
 }
 

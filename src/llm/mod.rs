@@ -65,3 +65,9 @@ pub enum FinishReason {
     /// Generation stopped because a specified stop sequence was encountered.
     StopSequence,
 }
+
+#[derive(Clone)]
+pub enum Model {
+    Llama(candle_transformers::models::quantized_llama::ModelWeights),
+    MixFormer(candle_transformers::models::quantized_mixformer::MixFormerSequentialForCausalLM),
+}
