@@ -90,7 +90,9 @@ async fn main() {
     let opt = Opt::parse();
 
     match load_config(&opt.config) {
-        Ok(config) => {
+        Ok(mut config) => {
+            config.model = opt.model.unwrap_or(config.model);
+
             info!("Loaded config: {:?}", config);
             if let Some(prompt) = opt.prompt {
                 let parameter = GenerateParameter {
