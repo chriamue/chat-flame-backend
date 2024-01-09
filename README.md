@@ -100,6 +100,8 @@ The following table shows the performance metrics of the model on different syst
 | 7b-open-chat-3.5 | AMD 5600G (8 Core VM) 16GB | 2.8 tokens/s      |
 | 13b (llama2 13b) | AMD 7900X3D (12 Core) 64GB | 5.2 tokens/s      |
 | phi-2            | AMD 7900X3D (12 Core) 64GB | 20.6 tokens/s     |
+| phi-2            | AMD 5600G (8 Core VM) 16GB | 5.3 tokens/s      |
+| phi-2            | Apple M2 (10 Core) 16GB    | 24.0 tokens/s     |
 
 ## Todo
 
