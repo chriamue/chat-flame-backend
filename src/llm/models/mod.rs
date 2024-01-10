@@ -1,8 +1,9 @@
 // source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
 use serde::Deserialize;
 use std::str::FromStr;
+use utoipa::ToSchema;
 
-#[derive(Default, Deserialize, Clone, Debug, Copy, PartialEq, Eq)]
+#[derive(Default, Deserialize, Clone, Debug, Copy, PartialEq, Eq, ToSchema)]
 pub enum Models {
     #[serde(rename = "7b")]
     L7b,
@@ -191,5 +192,14 @@ impl Models {
             Models::PhiV2 => ("lmz/candle-quantized-phi", "model-v2-q4k.gguf"),
             Models::PhiHermes => ("lmz/candle-quantized-phi", "model-phi-hermes-1_3B-q4k.gguf"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn test_from_str() {
+        let model = Models::from_str("7b-open-chat-3.5").unwrap();
+        assert_eq!(model, Models::OpenChat35);
     }
 }

@@ -2,7 +2,7 @@ use super::model::{
     CompatGenerateRequest, FinishReason, GenerateParameters, GenerateRequest, GenerateResponse,
     Info, StreamDetails, StreamResponse, Token,
 };
-use crate::api::model::ErrorResponse;
+use crate::{api::model::ErrorResponse, llm::models::Models};
 use utoipa::OpenApi;
 
 /// Represents the API documentation for the text generation inference service.
@@ -17,6 +17,7 @@ use utoipa::OpenApi;
         super::routes::generate::generate_handler,
         super::routes::generate_text::generate_text_handler,
         super::routes::generate_stream::generate_stream_handler,
+        super::routes::model::generate_model_handler,
         super::routes::health::get_health_handler,
         super::routes::info::get_info_handler
     ),
@@ -32,7 +33,8 @@ use utoipa::OpenApi;
             StreamDetails,
             Token,
             FinishReason,
-            Info
+            Info,
+            Models
         )
     ),
     // Metadata and description of the API tags.

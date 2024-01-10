@@ -14,6 +14,7 @@ pub mod generate_stream; // Module for handling streaming text generation reques
 pub mod generate_text; // Module for handling text generation requests.
 pub mod health; // Module for the health check endpoint.
 pub mod info; // Module for the service information endpoint.
+pub mod model; // Module to define model by path.
 
 // Public exports of route handlers for ease of access.
 pub use generate::generate_handler;
@@ -21,3 +22,4 @@ pub use generate_stream::generate_stream_handler;
 pub use generate_text::generate_text_handler;
 pub use health::get_health_handler;
 pub use info::get_info_handler;
+pub use model::generate_model_handler;
