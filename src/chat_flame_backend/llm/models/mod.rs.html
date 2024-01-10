@@ -193,11 +193,22 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="comment">// source: https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
 </span><span class="kw">use </span>serde::Deserialize;
 <span class="kw">use </span>std::str::FromStr;
+<span class="kw">use </span>utoipa::ToSchema;
 
-<span class="attr">#[derive(Default, Deserialize, Clone, Debug, Copy, PartialEq, Eq)]
+<span class="attr">#[derive(Default, Deserialize, Clone, Debug, Copy, PartialEq, Eq, ToSchema)]
 </span><span class="kw">pub enum </span>Models {
     <span class="attr">#[serde(rename = <span class="string">&quot;7b&quot;</span>)]
     </span>L7b,
@@ -386,6 +397,15 @@
             Models::PhiV2 =&gt; (<span class="string">&quot;lmz/candle-quantized-phi&quot;</span>, <span class="string">&quot;model-v2-q4k.gguf&quot;</span>),
             Models::PhiHermes =&gt; (<span class="string">&quot;lmz/candle-quantized-phi&quot;</span>, <span class="string">&quot;model-phi-hermes-1_3B-q4k.gguf&quot;</span>),
         }
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">fn </span>test_from_str() {
+        <span class="kw">let </span>model = Models::from_str(<span class="string">&quot;7b-open-chat-3.5&quot;</span>).unwrap();
+        <span class="macro">assert_eq!</span>(model, Models::OpenChat35);
     }
 }
 </code></pre></div></section></main></body></html>

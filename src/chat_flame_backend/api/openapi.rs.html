@@ -58,11 +58,13 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::model::{
     CompatGenerateRequest, FinishReason, GenerateParameters, GenerateRequest, GenerateResponse,
     Info, StreamDetails, StreamResponse, Token,
 };
-<span class="kw">use </span><span class="kw">crate</span>::api::model::ErrorResponse;
+<span class="kw">use crate</span>::{api::model::ErrorResponse, llm::models::Models};
 <span class="kw">use </span>utoipa::OpenApi;
 
 <span class="doccomment">/// Represents the API documentation for the text generation inference service.
@@ -77,6 +79,7 @@
         <span class="kw">super</span>::routes::generate::generate_handler,
         <span class="kw">super</span>::routes::generate_text::generate_text_handler,
         <span class="kw">super</span>::routes::generate_stream::generate_stream_handler,
+        <span class="kw">super</span>::routes::model::generate_model_handler,
         <span class="kw">super</span>::routes::health::get_health_handler,
         <span class="kw">super</span>::routes::info::get_info_handler
     ),
@@ -92,7 +95,8 @@
             StreamDetails,
             Token,
             FinishReason,
-            Info
+            Info,
+            Models
         )
     ),
     <span class="comment">// Metadata and description of the API tags.
