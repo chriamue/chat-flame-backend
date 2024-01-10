@@ -128,7 +128,7 @@
         .route(<span class="string">&quot;/health&quot;</span>, get(get_health_handler))
         .route(<span class="string">&quot;/info&quot;</span>, get(get_info_handler))
         .route(<span class="string">&quot;/generate_stream&quot;</span>, post(generate_stream_handler))
-        .route(<span class="string">&quot;/model/:model&quot;</span>, post(generate_model_handler))
+        .route(<span class="string">&quot;/model/:model/&quot;</span>, post(generate_model_handler))
         .with_state(config);
 
     <span class="kw">let </span>swagger_ui = SwaggerUi::new(<span class="string">&quot;/swagger-ui&quot;</span>).url(<span class="string">&quot;/api-docs/openapi.json&quot;</span>, ApiDoc::openapi());
