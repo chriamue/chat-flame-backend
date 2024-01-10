@@ -3,8 +3,8 @@ version: "3.8"
 services:
   chat-flame-backend:
     build: .
-    ports:
-      - "8080:8080"
+    #ports:
+    #  - "8080:8080"
     environment:
       - RUST_LOG=debug
     command: ./chat-flame-backend
@@ -25,8 +25,6 @@ services:
       - ./chat-ui.env:/app/.env.local
     depends_on:
       - mongodb
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 volumes:
   models:

@@ -29,7 +29,7 @@ use super::{generate_stream::generate_stream_handler, generate_text_handler};
 #[utoipa::path(
     post,
     tag = "Text Generation Inference",
-    path = "/model/{model}",
+    path = "/model/{model}/",
     params(
         ("model" = Models, Path, description = "Model to use for generation"),
     ),

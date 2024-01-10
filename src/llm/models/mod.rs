@@ -21,7 +21,7 @@ pub enum Models {
     L7bCode,
     #[serde(rename = "13b-code")]
     L13bCode,
-    #[serde(rename = "32b-code")]
+    #[serde(rename = "34b-code")]
     L34bCode,
     #[serde(rename = "7b-leo")]
     Leo7b,

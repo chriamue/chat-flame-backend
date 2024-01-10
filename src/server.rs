@@ -38,7 +38,7 @@ pub fn server(config: Config) -> Router {
         .route("/health", get(get_health_handler))
         .route("/info", get(get_info_handler))
         .route("/generate_stream", post(generate_stream_handler))
-        .route("/model/:model", post(generate_model_handler))
+        .route("/model/:model/", post(generate_model_handler))
         .with_state(config);
 
     let swagger_ui = SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi());
