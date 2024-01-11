@@ -107,6 +107,13 @@ The following table shows the performance metrics of the model on different syst
 | phi-2            | AMD 5600G (8 Core VM) 16GB | 5.3 tokens/s      |
 | phi-2            | Apple M2 (10 Core) 16GB    | 24.0 tokens/s     |
 
+### Hint
+
+The performance of the model is highly dependent on the memory bandwidth of the system.
+While getting 20.6 tokens/s for the Phi-2 Model on a AMD 7900X3D with 64GB of DDR5-4800 memory,
+the performance could be increased to
+21.8 tokens/s by overclocking the memory to DDR5-5600.
+
 ## Todo
 
 - [x] implement api for https://huggingface.github.io/text-generation-inference/#/
