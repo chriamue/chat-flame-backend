@@ -68,9 +68,14 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains the endpoint for retrieving model information.
 
-</span><span class="kw">use crate</span>::{api::model::Info, config::Config};
+</span><span class="kw">use crate</span>::{api::model::Info, server::AppState};
 <span class="kw">use </span>axum::{extract::State, http::StatusCode, Json};
 
 <span class="doccomment">/// Endpoint to get model information.
@@ -85,7 +90,8 @@
     ),
     tag = <span class="string">&quot;Text Generation Inference&quot;
 </span>)]
-</span><span class="kw">pub async fn </span>get_info_handler(config: State&lt;Config&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Json&lt;Info&gt;, StatusCode&gt; {
+</span><span class="kw">pub async fn </span>get_info_handler(app_state: State&lt;AppState&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Json&lt;Info&gt;, StatusCode&gt; {
+    <span class="kw">let </span>config = <span class="kw-2">&amp;</span>app_state.config;
     <span class="kw">let </span>version = <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>);
     <span class="kw">let </span>model_info = Info {
         docker_label: <span class="prelude-val">None</span>,
@@ -121,9 +127,13 @@
             port: <span class="number">8080</span>,
             cache_dir: <span class="prelude-val">None</span>,
             model: Models::default(),
+            keep_in_memory: <span class="prelude-val">None</span>,
         };
 
-        <span class="kw">let </span>state = State(test_config.clone());
+        <span class="kw">let </span>state = State(AppState {
+            config: test_config.clone(),
+            text_generation: <span class="prelude-val">None</span>,
+        });
         <span class="kw">let </span>response = get_info_handler(state).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>info = response.<span class="number">0</span>;
         <span class="macro">assert_eq!</span>(info.max_batch_total_tokens, <span class="number">2048</span>);

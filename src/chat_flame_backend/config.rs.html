@@ -69,6 +69,10 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>serde::Deserialize;
 <span class="kw">use </span>std::fs::File;
 <span class="kw">use </span>std::io::Read;
@@ -89,6 +93,9 @@
 
     <span class="doccomment">/// Model to be used by the server.
     </span><span class="kw">pub </span>model: Models,
+
+    <span class="doccomment">/// Whether to keep the default model in memory.
+    </span><span class="kw">pub </span>keep_in_memory: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 }
 
 <span class="doccomment">/// Loads the application configuration from a YAML file.
@@ -138,6 +145,7 @@
         <span class="macro">assert_eq!</span>(config.port, <span class="number">8080</span>);
         <span class="macro">assert_eq!</span>(config.cache_dir, <span class="prelude-val">Some</span>(PathBuf::from(<span class="string">&quot;/tmp&quot;</span>)));
         <span class="macro">assert_eq!</span>(config.model, Models::OpenChat35);
+        <span class="macro">assert_eq!</span>(config.keep_in_memory, <span class="prelude-val">None</span>);
     }
 }
 </code></pre></div></section></main></body></html>

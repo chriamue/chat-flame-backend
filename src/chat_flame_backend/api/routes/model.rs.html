@@ -91,8 +91,8 @@
 
 <span class="kw">use crate</span>::{
     api::model::{CompatGenerateRequest, ErrorResponse, GenerateRequest},
-    config::Config,
     llm::models::Models,
+    server::AppState,
 };
 
 <span class="kw">use super</span>::{generate_stream::generate_stream_handler, generate_text_handler};
@@ -138,15 +138,15 @@
 
 </span><span class="kw">pub async fn </span>generate_model_handler(
     Path(model): Path&lt;Models&gt;,
-    config: State&lt;Config&gt;,
+    app_state: State&lt;AppState&gt;,
     Json(payload): Json&lt;CompatGenerateRequest&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Response, (StatusCode, Json&lt;ErrorResponse&gt;)&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>config = config.clone();
-    config.model = model;
+    <span class="kw">let </span><span class="kw-2">mut </span>app_state = app_state.clone();
+    app_state.config.model = model;
 
     <span class="kw">if </span>payload.stream {
         <span class="prelude-val">Ok</span>(generate_stream_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,
@@ -156,7 +156,7 @@
         </span>.into_response())
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(generate_text_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,

@@ -145,6 +145,14 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>axum::{
     extract::State,
     http::StatusCode,
@@ -154,7 +162,7 @@
 
 <span class="kw">use crate</span>::{
     api::model::{CompatGenerateRequest, ErrorResponse, GenerateRequest},
-    config::Config,
+    server::AppState,
 };
 
 <span class="kw">use super</span>::{generate_stream::generate_stream_handler, generate_text_handler};
@@ -195,12 +203,12 @@
     )
 )]
 </span><span class="kw">pub async fn </span>generate_handler(
-    config: State&lt;Config&gt;,
+    app_state: State&lt;AppState&gt;,
     Json(payload): Json&lt;CompatGenerateRequest&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Response, (StatusCode, Json&lt;ErrorResponse&gt;)&gt; {
     <span class="kw">if </span>payload.stream {
         <span class="prelude-val">Ok</span>(generate_stream_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,
@@ -210,7 +218,7 @@
         </span>.into_response())
     } <span class="kw">else </span>{
         <span class="prelude-val">Ok</span>(generate_text_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,
@@ -238,9 +246,13 @@
     </span><span class="attr">#[ignore = <span class="string">&quot;Will download model from HuggingFace&quot;</span>]
     #[tokio::test]
     </span><span class="kw">async fn </span>test_generate_handler_stream_enabled() {
+        <span class="kw">let </span>state = AppState {
+            config: Config::default(),
+            text_generation: <span class="prelude-val">None</span>,
+        };
         <span class="kw">let </span>app = Router::new()
             .route(<span class="string">&quot;/&quot;</span>, post(generate_handler))
-            .with_state(Config::default());
+            .with_state(state);
 
         <span class="kw">let </span>response = app
             .oneshot(
@@ -267,9 +279,13 @@
     </span><span class="attr">#[tokio::test]
     #[ignore = <span class="string">&quot;Will download model from HuggingFace&quot;</span>]
     </span><span class="kw">async fn </span>test_generate_handler_stream_disabled() {
+        <span class="kw">let </span>state = AppState {
+            config: Config::default(),
+            text_generation: <span class="prelude-val">None</span>,
+        };
         <span class="kw">let </span>app = Router::new()
             .route(<span class="string">&quot;/&quot;</span>, post(generate_handler))
-            .with_state(Config::default());
+            .with_state(state);
 
         <span class="kw">let </span>response = app
             .oneshot(

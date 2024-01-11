@@ -103,15 +103,10 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     api::model::{ErrorResponse, GenerateRequest, GenerateResponse},
-    config::Config,
     llm::{generate_parameter::GenerateParameter, text_generation::create_text_generation},
+    server::AppState,
 };
 <span class="kw">use </span>axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
@@ -150,7 +145,7 @@
     tag = <span class="string">&quot;Text Generation Inference&quot;
 </span>)]
 </span><span class="kw">pub async fn </span>generate_text_handler(
-    config: State&lt;Config&gt;,
+    app_state: State&lt;AppState&gt;,
     Json(payload): Json&lt;GenerateRequest&gt;,
 ) -&gt; <span class="kw">impl </span>IntoResponse {
     <span class="kw">let </span>temperature = <span class="kw">match </span><span class="kw-2">&amp;</span>payload.parameters {
@@ -174,45 +169,40 @@
         <span class="prelude-val">None </span>=&gt; <span class="number">50</span>,
     };
 
-    <span class="kw">let </span>generator = create_text_generation(config.model, <span class="kw-2">&amp;</span>config.cache_dir);
-    <span class="kw">match </span>generator {
-        <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>generator) =&gt; {
-            <span class="kw">let </span>parameter = GenerateParameter {
-                temperature: temperature.unwrap_or_default(),
-                top_p: top_p.unwrap_or_default(),
-                max_new_tokens: sample_len,
-                seed: <span class="number">42</span>,
-                repeat_penalty,
-                repeat_last_n,
-            };
+    <span class="kw">let </span>config = app_state.config.clone();
 
-            <span class="kw">let </span>generated_text = generator.run(<span class="kw-2">&amp;</span>payload.inputs, parameter);
-            <span class="kw">match </span>generated_text {
-                <span class="prelude-val">Ok</span>(generated_text) =&gt; <span class="kw">match </span>generated_text {
-                    <span class="prelude-val">Some</span>(text) =&gt; <span class="prelude-val">Ok</span>(Json(GenerateResponse {
-                        generated_text: text,
-                    })),
-                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>((
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse {
-                            error: <span class="string">&quot;Incomplete generation&quot;</span>.to_string(),
-                            error_type: <span class="prelude-val">None</span>,
-                        }),
-                    )),
-                },
-                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>((
-                    StatusCode::FAILED_DEPENDENCY,
-                    Json(ErrorResponse {
-                        error: <span class="string">&quot;Request failed during generation&quot;</span>.to_string(),
-                        error_type: <span class="prelude-val">None</span>,
-                    }),
-                )),
-            }
-        }
+    <span class="kw">let </span><span class="kw-2">mut </span>generator = <span class="kw">match </span><span class="kw-2">&amp;</span>app_state.text_generation {
+        <span class="prelude-val">Some</span>(text_generation) =&gt; text_generation.clone(),
+        <span class="prelude-val">None </span>=&gt; create_text_generation(config.model, <span class="kw-2">&amp;</span>config.cache_dir).unwrap(),
+    };
+
+    <span class="kw">let </span>parameter = GenerateParameter {
+        temperature: temperature.unwrap_or_default(),
+        top_p: top_p.unwrap_or_default(),
+        max_new_tokens: sample_len,
+        seed: <span class="number">42</span>,
+        repeat_penalty,
+        repeat_last_n,
+    };
+
+    <span class="kw">let </span>generated_text = generator.run(<span class="kw-2">&amp;</span>payload.inputs, parameter);
+    <span class="kw">match </span>generated_text {
+        <span class="prelude-val">Ok</span>(generated_text) =&gt; <span class="kw">match </span>generated_text {
+            <span class="prelude-val">Some</span>(text) =&gt; <span class="prelude-val">Ok</span>(Json(GenerateResponse {
+                generated_text: text,
+            })),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: <span class="string">&quot;Incomplete generation&quot;</span>.to_string(),
+                    error_type: <span class="prelude-val">None</span>,
+                }),
+            )),
+        },
         <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>((
-            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::FAILED_DEPENDENCY,
             Json(ErrorResponse {
-                error: <span class="string">&quot;Model is overloaded&quot;</span>.to_string(),
+                error: <span class="string">&quot;Request failed during generation&quot;</span>.to_string(),
                 error_type: <span class="prelude-val">None</span>,
             }),
         )),

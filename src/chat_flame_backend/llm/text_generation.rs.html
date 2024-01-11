@@ -249,6 +249,7 @@
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     api::model::{FinishReason, StreamDetails, StreamResponse, Token},
     llm::{
@@ -277,7 +278,8 @@
     Model,
 };
 
-<span class="kw">pub struct </span>TextGeneration {
+<span class="attr">#[derive(Clone)]
+</span><span class="kw">pub struct </span>TextGeneration {
     model: Arc&lt;Mutex&lt;Model&gt;&gt;,
     tokenizer: Arc&lt;Mutex&lt;TokenOutputStream&gt;&gt;,
 }

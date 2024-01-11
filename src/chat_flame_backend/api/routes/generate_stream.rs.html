@@ -88,9 +88,16 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::llm::generate_parameter::GenerateParameter;
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::api::model::GenerateRequest;
+<span class="kw">use </span><span class="kw">crate</span>::llm::generate_parameter::GenerateParameter;
 <span class="kw">use </span><span class="kw">crate</span>::llm::text_generation::create_text_generation;
-<span class="kw">use crate</span>::{api::model::GenerateRequest, config::Config};
+<span class="kw">use </span><span class="kw">crate</span>::server::AppState;
 <span class="kw">use </span>axum::{
     extract::State,
     response::{sse::Event, IntoResponse, Sse},
@@ -128,7 +135,7 @@
     tag = <span class="string">&quot;Text Generation Inference&quot;
 </span>)]
 </span><span class="kw">pub async fn </span>generate_stream_handler(
-    config: State&lt;Config&gt;,
+    app_state: State&lt;AppState&gt;,
     Json(payload): Json&lt;GenerateRequest&gt;,
 ) -&gt; <span class="kw">impl </span>IntoResponse {
     <span class="macro">debug!</span>(<span class="string">&quot;Received request: {:?}&quot;</span>, payload);
@@ -158,7 +165,12 @@
         <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[<span class="string">&quot;&lt;|endoftext|&gt;&quot;</span>.to_string(), <span class="string">&quot;&lt;/s&gt;&quot;</span>.to_string()],
     };
 
-    <span class="kw">let </span><span class="kw-2">mut </span>generator = create_text_generation(config.model, <span class="kw-2">&amp;</span>config.cache_dir).unwrap();
+    <span class="kw">let </span>config = app_state.config.clone();
+
+    <span class="kw">let </span><span class="kw-2">mut </span>generator = <span class="kw">match </span><span class="kw-2">&amp;</span>app_state.text_generation {
+        <span class="prelude-val">Some</span>(text_generation) =&gt; text_generation.clone(),
+        <span class="prelude-val">None </span>=&gt; create_text_generation(config.model, <span class="kw-2">&amp;</span>config.cache_dir).unwrap(),
+    };
 
     <span class="kw">let </span>parameter = GenerateParameter {
         temperature: temperature.unwrap_or_default(),

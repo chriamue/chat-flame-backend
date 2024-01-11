@@ -88,6 +88,16 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>axum::{
     response::Redirect,
     routing::{get, post},
@@ -106,7 +116,14 @@
         routes::{get_health_handler, get_info_handler},
     },
     config::Config,
+    llm::text_generation::TextGeneration,
 };
+
+<span class="attr">#[derive(Clone)]
+</span><span class="kw">pub struct </span>AppState {
+    <span class="kw">pub </span>config: Config,
+    <span class="kw">pub </span>text_generation: <span class="prelude-ty">Option</span>&lt;TextGeneration&gt;,
+}
 
 <span class="doccomment">/// Creates and configures the Axum web server with various routes and Swagger UI.
 ///
@@ -120,7 +137,7 @@
 /// # Returns
 ///
 /// An instance of `axum::Router` configured with all routes and the Swagger UI.
-</span><span class="kw">pub fn </span>server(config: Config) -&gt; Router {
+</span><span class="kw">pub fn </span>server(config: Config, text_generation: <span class="prelude-ty">Option</span>&lt;TextGeneration&gt;) -&gt; Router {
     <span class="kw">let </span>router = Router::new()
         .route(<span class="string">&quot;/&quot;</span>, get(|| <span class="kw">async </span>{ Redirect::permanent(<span class="string">&quot;/swagger-ui&quot;</span>) }))
         .route(<span class="string">&quot;/&quot;</span>, post(generate_handler))
@@ -129,7 +146,10 @@
         .route(<span class="string">&quot;/info&quot;</span>, get(get_info_handler))
         .route(<span class="string">&quot;/generate_stream&quot;</span>, post(generate_stream_handler))
         .route(<span class="string">&quot;/model/:model/&quot;</span>, post(generate_model_handler))
-        .with_state(config);
+        .with_state(AppState {
+            config: config.clone(),
+            text_generation,
+        });
 
     <span class="kw">let </span>swagger_ui = SwaggerUi::new(<span class="string">&quot;/swagger-ui&quot;</span>).url(<span class="string">&quot;/api-docs/openapi.json&quot;</span>, ApiDoc::openapi());
 
@@ -148,7 +168,7 @@
     </span><span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_root_redirects_to_swagger_ui() {
         <span class="kw">let </span>config = Config::default();
-        <span class="kw">let </span>app = server(config);
+        <span class="kw">let </span>app = server(config, <span class="prelude-val">None</span>);
 
         <span class="kw">let </span>req = Request::builder()
             .method(<span class="string">&quot;GET&quot;</span>)
@@ -166,7 +186,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_swagger_ui_endpoint() {
         <span class="kw">let </span>config = Config::default();
-        <span class="kw">let </span>app = server(config);
+        <span class="kw">let </span>app = server(config, <span class="prelude-val">None</span>);
 
         <span class="kw">let </span>req = Request::builder()
             .method(<span class="string">&quot;GET&quot;</span>)
