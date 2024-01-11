@@ -69,6 +69,11 @@ pip install huggingface-hub
 python test.py
 ```
 
+## Architecture
+
+The backend is written in rust. The models are loaded using the [candle](https://github.com/huggingface/candle) framework.
+To serve the models on an http endpoint, axum is used.
+Utoipa is used to provide a swagger ui for the api.
 
 ## Supported Models
 
@@ -80,7 +85,6 @@ python test.py
 - [ ] GPT-Neo
 - [ ] GPT-J
 - [ ] Llama
-
 
 ### Mistral
 
