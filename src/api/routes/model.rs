@@ -7,8 +7,8 @@ use axum::{
 
 use crate::{
     api::model::{CompatGenerateRequest, ErrorResponse, GenerateRequest},
-    config::Config,
     llm::models::Models,
+    server::AppState,
 };
 
 use super::{generate_stream::generate_stream_handler, generate_text_handler};
@@ -54,15 +54,15 @@ use super::{generate_stream::generate_stream_handler, generate_text_handler};
 
 pub async fn generate_model_handler(
     Path(model): Path<Models>,
-    config: State<Config>,
+    app_state: State<AppState>,
     Json(payload): Json<CompatGenerateRequest>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
-    let mut config = config.clone();
-    config.model = model;
+    let mut app_state = app_state.clone();
+    app_state.config.model = model;
 
     if payload.stream {
         Ok(generate_stream_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,
@@ -72,7 +72,7 @@ pub async fn generate_model_handler(
         .into_response())
     } else {
         Ok(generate_text_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,

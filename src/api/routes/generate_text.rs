@@ -1,7 +1,7 @@
 use crate::{
     api::model::{ErrorResponse, GenerateRequest, GenerateResponse},
-    config::Config,
     llm::{generate_parameter::GenerateParameter, text_generation::create_text_generation},
+    server::AppState,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
@@ -40,7 +40,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
     tag = "Text Generation Inference"
 )]
 pub async fn generate_text_handler(
-    config: State<Config>,
+    app_state: State<AppState>,
     Json(payload): Json<GenerateRequest>,
 ) -> impl IntoResponse {
     let temperature = match &payload.parameters {
@@ -64,45 +64,40 @@ pub async fn generate_text_handler(
         None => 50,
     };
 
-    let generator = create_text_generation(config.model, &config.cache_dir);
-    match generator {
-        Ok(mut generator) => {
-            let parameter = GenerateParameter {
-                temperature: temperature.unwrap_or_default(),
-                top_p: top_p.unwrap_or_default(),
-                max_new_tokens: sample_len,
-                seed: 42,
-                repeat_penalty,
-                repeat_last_n,
-            };
+    let config = app_state.config.clone();
 
-            let generated_text = generator.run(&payload.inputs, parameter);
-            match generated_text {
-                Ok(generated_text) => match generated_text {
-                    Some(text) => Ok(Json(GenerateResponse {
-                        generated_text: text,
-                    })),
-                    None => Err((
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse {
-                            error: "Incomplete generation".to_string(),
-                            error_type: None,
-                        }),
-                    )),
-                },
-                Err(_) => Err((
-                    StatusCode::FAILED_DEPENDENCY,
-                    Json(ErrorResponse {
-                        error: "Request failed during generation".to_string(),
-                        error_type: None,
-                    }),
-                )),
-            }
-        }
+    let mut generator = match &app_state.text_generation {
+        Some(text_generation) => text_generation.clone(),
+        None => create_text_generation(config.model, &config.cache_dir).unwrap(),
+    };
+
+    let parameter = GenerateParameter {
+        temperature: temperature.unwrap_or_default(),
+        top_p: top_p.unwrap_or_default(),
+        max_new_tokens: sample_len,
+        seed: 42,
+        repeat_penalty,
+        repeat_last_n,
+    };
+
+    let generated_text = generator.run(&payload.inputs, parameter);
+    match generated_text {
+        Ok(generated_text) => match generated_text {
+            Some(text) => Ok(Json(GenerateResponse {
+                generated_text: text,
+            })),
+            None => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Incomplete generation".to_string(),
+                    error_type: None,
+                }),
+            )),
+        },
         Err(_) => Err((
-            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::FAILED_DEPENDENCY,
             Json(ErrorResponse {
-                error: "Model is overloaded".to_string(),
+                error: "Request failed during generation".to_string(),
                 error_type: None,
             }),
         )),

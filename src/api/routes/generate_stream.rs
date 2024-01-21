@@ -1,6 +1,7 @@
+use crate::api::model::GenerateRequest;
 use crate::llm::generate_parameter::GenerateParameter;
 use crate::llm::text_generation::create_text_generation;
-use crate::{api::model::GenerateRequest, config::Config};
+use crate::server::AppState;
 use axum::{
     extract::State,
     response::{sse::Event, IntoResponse, Sse},
@@ -38,7 +39,7 @@ use std::vec;
     tag = "Text Generation Inference"
 )]
 pub async fn generate_stream_handler(
-    config: State<Config>,
+    app_state: State<AppState>,
     Json(payload): Json<GenerateRequest>,
 ) -> impl IntoResponse {
     debug!("Received request: {:?}", payload);
@@ -68,7 +69,12 @@ pub async fn generate_stream_handler(
         None => vec!["<|endoftext|>".to_string(), "</s>".to_string()],
     };
 
-    let mut generator = create_text_generation(config.model, &config.cache_dir).unwrap();
+    let config = app_state.config.clone();
+
+    let mut generator = match &app_state.text_generation {
+        Some(text_generation) => text_generation.clone(),
+        None => create_text_generation(config.model, &config.cache_dir).unwrap(),
+    };
 
     let parameter = GenerateParameter {
         temperature: temperature.unwrap_or_default(),

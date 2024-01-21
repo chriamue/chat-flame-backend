@@ -1,7 +1,7 @@
 use chat_flame_backend::{
     config::{load_config, Config},
     llm::{
-        generate_parameter::GenerateParameter, loader::create_model, models::Models,
+        generate_parameter::GenerateParameter, models::Models,
         text_generation::create_text_generation,
     },
     server::server,
@@ -72,11 +72,15 @@ async fn generate_text(
 async fn start_server(model: Models, config: Config) {
     info!("Starting server");
     info!("preload model");
-    let _ = create_model(model, &config.cache_dir);
+    let text_generation = create_text_generation(model, &config.cache_dir).unwrap();
 
     info!("Running on port: {}", config.port);
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-    let app = server(config);
+
+    let app = match &config.keep_in_memory {
+        Some(true) => server(config, Some(text_generation)),
+        _ => server(config, None),
+    };
 
     info!("Server running at http://{}", addr);
 

@@ -26,6 +26,7 @@ use super::{
     Model,
 };
 
+#[derive(Clone)]
 pub struct TextGeneration {
     model: Arc<Mutex<Model>>,
     tokenizer: Arc<Mutex<TokenOutputStream>>,

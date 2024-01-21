@@ -6,7 +6,7 @@ use chat_flame_backend::server::server;
 #[tokio::test]
 async fn test_generate_handler() {
     let config = Config::default();
-    let app = server(config);
+    let app = server(config, None);
 
     let server = TestServer::new(app).unwrap();
     let response = server
@@ -31,7 +31,7 @@ async fn test_generate_handler() {
 #[tokio::test]
 async fn test_generate_text_handler() {
     let config = Config::default();
-    let app = server(config);
+    let app = server(config, None);
 
     let server = TestServer::new(app).unwrap();
     let response = server
@@ -56,7 +56,7 @@ async fn test_generate_text_handler() {
 #[tokio::test]
 async fn test_generate_text_model_handler() {
     let config = Config::default();
-    let app = server(config);
+    let app = server(config, None);
 
     let server = TestServer::new(app).unwrap();
     let response = server
@@ -80,7 +80,7 @@ async fn test_generate_text_model_handler() {
 #[tokio::test]
 async fn test_get_health_handler() {
     let config = Config::default();
-    let app = server(config);
+    let app = server(config, None);
 
     let server = TestServer::new(app).unwrap();
     let response = server.get("/health").await;
@@ -91,7 +91,7 @@ async fn test_get_health_handler() {
 #[tokio::test]
 async fn test_get_info_handler() {
     let config = Config::default();
-    let app = server(config);
+    let app = server(config, None);
 
     let server = TestServer::new(app).unwrap();
     let response = server.get("/info").await;

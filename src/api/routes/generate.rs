@@ -7,7 +7,7 @@ use axum::{
 
 use crate::{
     api::model::{CompatGenerateRequest, ErrorResponse, GenerateRequest},
-    config::Config,
+    server::AppState,
 };
 
 use super::{generate_stream::generate_stream_handler, generate_text_handler};
@@ -48,12 +48,12 @@ use super::{generate_stream::generate_stream_handler, generate_text_handler};
     )
 )]
 pub async fn generate_handler(
-    config: State<Config>,
+    app_state: State<AppState>,
     Json(payload): Json<CompatGenerateRequest>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
     if payload.stream {
         Ok(generate_stream_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,
@@ -63,7 +63,7 @@ pub async fn generate_handler(
         .into_response())
     } else {
         Ok(generate_text_handler(
-            config,
+            app_state,
             Json(GenerateRequest {
                 inputs: payload.inputs,
                 parameters: payload.parameters,
@@ -91,9 +91,13 @@ mod tests {
     #[ignore = "Will download model from HuggingFace"]
     #[tokio::test]
     async fn test_generate_handler_stream_enabled() {
+        let state = AppState {
+            config: Config::default(),
+            text_generation: None,
+        };
         let app = Router::new()
             .route("/", post(generate_handler))
-            .with_state(Config::default());
+            .with_state(state);
 
         let response = app
             .oneshot(
@@ -120,9 +124,13 @@ mod tests {
     #[tokio::test]
     #[ignore = "Will download model from HuggingFace"]
     async fn test_generate_handler_stream_disabled() {
+        let state = AppState {
+            config: Config::default(),
+            text_generation: None,
+        };
         let app = Router::new()
             .route("/", post(generate_handler))
-            .with_state(Config::default());
+            .with_state(state);
 
         let response = app
             .oneshot(

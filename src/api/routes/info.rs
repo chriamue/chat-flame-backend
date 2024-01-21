@@ -1,6 +1,6 @@
 //! This module contains the endpoint for retrieving model information.
 
-use crate::{api::model::Info, config::Config};
+use crate::{api::model::Info, server::AppState};
 use axum::{extract::State, http::StatusCode, Json};
 
 /// Endpoint to get model information.
@@ -15,7 +15,8 @@ use axum::{extract::State, http::StatusCode, Json};
     ),
     tag = "Text Generation Inference"
 )]
-pub async fn get_info_handler(config: State<Config>) -> Result<Json<Info>, StatusCode> {
+pub async fn get_info_handler(app_state: State<AppState>) -> Result<Json<Info>, StatusCode> {
+    let config = &app_state.config;
     let version = env!("CARGO_PKG_VERSION");
     let model_info = Info {
         docker_label: None,
@@ -51,9 +52,13 @@ mod tests {
             port: 8080,
             cache_dir: None,
             model: Models::default(),
+            keep_in_memory: None,
         };
 
-        let state = State(test_config.clone());
+        let state = State(AppState {
+            config: test_config.clone(),
+            text_generation: None,
+        });
         let response = get_info_handler(state).await.unwrap();
         let info = response.0;
         assert_eq!(info.max_batch_total_tokens, 2048);

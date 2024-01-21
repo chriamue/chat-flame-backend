@@ -18,6 +18,9 @@ pub struct Config {
 
     /// Model to be used by the server.
     pub model: Models,
+
+    /// Whether to keep the default model in memory.
+    pub keep_in_memory: Option<bool>,
 }
 
 /// Loads the application configuration from a YAML file.
@@ -67,5 +70,6 @@ mod tests {
         assert_eq!(config.port, 8080);
         assert_eq!(config.cache_dir, Some(PathBuf::from("/tmp")));
         assert_eq!(config.model, Models::OpenChat35);
+        assert_eq!(config.keep_in_memory, None);
     }
 }
